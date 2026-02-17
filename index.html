@@ -32,10 +32,10 @@
     </div>
     <div id="matrix-shell"><div id="matrix"></div></div>
     <div class="container">
-        <button class="btn-primary" onclick="connect()">INITIALIZE SYSTEM</button>
-        <div class="card"><span class="label">Atmospheric Color</span><input type="color" value="#ff5e00" oninput="setStatic(this.value)"></div>
+        <button class="btn-primary" onclick="initBLE()">INITIALIZE SYSTEM</button>
+        <div class="card"><span class="label">Solid State Color</span><input type="color" id="solidColor" value="#ff5e00" oninput="setStatic(this.value)"></div>
         <div class="card"><span class="label">Intensity (GCC)</span><input type="range" min="0" max="255" value="128" oninput="updateGCC(this.value)"></div>
-        <div class="card"><span class="label">Advanced Modes (Math-based)</span>
+        <div class="card"><span class="label">Advanced Algorithms</span>
             <div class="grid-2">
                 <button onclick="runMode('phoenix')">PHOENIX</button>
                 <button onclick="runMode('ocean')">OCEAN</button>
@@ -46,17 +46,39 @@
     </div>
 
     <script>
-        // --- Simplified Noise Function for Organic Movement ---
-        const noise=(()=>{let p=new Uint8Array(512),perm=new Uint8Array(512),gradP=new Float32Array(512);for(let i=0;i<256;i++)p[i]=i;for(let i=0;i<256;i++){let r=i+Math.random()*(256-i)|0,t=p[i];p[i]=p[r],p[r]=t}for(let i=0;i<512;i++){perm[i]=p[i&255],gradP[i]=Math.random()*2-1}let lerp=(t,a,b)=>a+t*(b-a),fade=t=>t*t*t*(t*(t*6-15)+10);return(x,y,z)=>{let X=Math.floor(x)&255,Y=Math.floor(y)&255,Z=Math.floor(z)&255;x-=Math.floor(x),y-=Math.floor(y),z-=Math.floor(z);let u=fade(x),v=fade(y),w=fade(z),A=perm[X]+Y,AA=perm[A]+Z,AB=perm[A+1]+Z,B=perm[X+1]+Y,BA=perm[B]+Z,BB=perm[B+1]+Z;return lerp(w,lerp(v,lerp(u,gradP[AA]*x+gradP[AA+1]*(x-1)),lerp(u,gradP[AB]*x+gradP[AB+1]*(x-1))),lerp(v,lerp(u,gradP[BA]*x+gradP[BA+1]*(x-1)),lerp(u,gradP[BB]*x+gradP[BB+1]*(x-1))))}})();
+        // --- Robust Noise Implementation for Viola ---
+        const noise = (() => {
+            const p = new Uint8Array(512);
+            for(let i=0; i<256; i++) p[i] = i;
+            for(let i=255; i>0; i--) { const r = Math.floor(Math.random() * (i+1)); [p[i], p[r]] = [p[r], p[i]]; }
+            for(let i=0; i<256; i++) p[256+i] = p[i];
+            const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+            const lerp = (t, a, b) => a + t * (b - a);
+            const grad = (hash, x, y, z) => {
+                const h = hash & 15;
+                const u = h < 8 ? x : y;
+                const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+                return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+            };
+            return (x, y, z) => {
+                const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+                x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+                const u = fade(x), v = fade(y), w = fade(z);
+                const A = p[X]+Y, AA = p[A]+Z, AB = p[A+1]+Z, B = p[X+1]+Y, BA = p[B]+Z, BB = p[B+1]+Z;
+                return lerp(w, lerp(v, lerp(u, grad(p[AA],x,y,z), grad(p[BA],x-1,y,z)), lerp(u, grad(p[AB],x,y-1,z), grad(p[BA+1],x-1,y-1,z))),
+                               lerp(v, lerp(u, grad(p[AA+1],x,y,z-1), grad(p[BA+1],x-1,y,z-1)), lerp(u, grad(p[AB+1],x,y-1,z-1), grad(p[BB+1],x-1,y-1,z-1))));
+            };
+        })();
 
         const matrixEl = document.getElementById('matrix');
-        const leds = [];
+        let leds = [];
         let gcc = 0.5;
-        let interval = null;
-        let t = 0;
+        let animTimer = null;
+        let time = 0;
 
         function initMatrix() {
             matrixEl.innerHTML = '';
+            leds = [];
             for (let i = 0; i < 64; i++) {
                 const led = document.createElement('div');
                 led.className = 'led';
@@ -68,61 +90,53 @@
         function draw(x, y, r, g, b) {
             const index = y * 8 + x;
             if (leds[index]) {
-                // Clamp values to 0-255 before applying brightness
-                r = Math.max(0, Math.min(255, r));
-                g = Math.max(0, Math.min(255, g));
-                b = Math.max(0, Math.min(255, b));
-                leds[index].style.background = `rgb(${r*gcc},${g*gcc},${b*gcc})`;
+                const br = gcc;
+                leds[index].style.background = `rgb(${Math.floor(r*br)},${Math.floor(g*br)},${Math.floor(b*br)})`;
             }
         }
 
         function setStatic(hex) {
-            stop();
-            const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+            stopAnim();
+            const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
             for(let i=0; i<64; i++) draw(i%8, Math.floor(i/8), r, g, b);
         }
 
         function runMode(mode) {
-            stop();
+            stopAnim();
             if (mode === 'off') { leds.forEach(l => l.style.background = '#080808'); return; }
-            interval = setInterval(() => {
-                t += 0.015; // Slower time base for smoother changes
+            animTimer = setInterval(() => {
+                time += 0.02;
                 for(let y=0; y<8; y++) {
                     for(let x=0; x<8; x++) {
                         if (mode === 'phoenix') {
-                            // Fire with upward scrolling noise
-                            // y coord is offset by time 't' to create rising effect
-                            let n = noise(x * 0.3, y * 0.2 + t * 3, t); // 3D noise for organic movement
-                            let heat = (n * 0.5 + 0.5) * 255; // Map noise -1~1 to 0~255
-                            // Apply vertical gradient (hotter at bottom)
-                            heat = heat * (1 - (y / 10.0)); 
-                            // Fire palette mapping
-                            draw(x, y, heat, heat*heat/200, heat*heat*heat/8000);
-
+                            // High-quality Fire Algorithm
+                            let n = noise(x * 0.4, y * 0.3 + time * 2, time * 0.5);
+                            let heat = (n * 0.5 + 0.5) * 255;
+                            heat = heat * (1.1 - (y / 7)); // Vertical decay
+                            draw(x, y, heat, heat**2/255, heat**3/(255*255));
                         } else if (mode === 'ocean') {
-                            // Water ripples with noise-distorted phase
-                            let n = noise(x * 0.2 + t, y * 0.2, t * 0.5);
-                            // Sine wave with noise added to input
-                            let wave = Math.sin(x * 0.5 + y * 0.3 + t * 2 + n * 2); 
-                            let brightness = (wave * 0.5 + 0.5) * 200 + 55;
-                            draw(x, y, 0, brightness * 0.6, brightness);
-
+                            // Deep Sea Ripple Logic
+                            let n = noise(x * 0.3 - time, y * 0.3, time * 0.2);
+                            let w = Math.sin(x * 0.8 + y * 0.5 + time * 3 + n * 3);
+                            let b = (w * 0.5 + 0.5) * 200 + 55;
+                            draw(x, y, 0, b * 0.4, b);
                         } else if (mode === 'plasma') {
-                            // Slowly changing random colors using noise on RGB channels
-                            // Different time scales for each channel creates complex shifting
-                            let r = (noise(x*0.1, y*0.1, t*0.7) * 0.5 + 0.5) * 255;
-                            let g = (noise(x*0.15, y*0.15, t*0.5 + 10) * 0.5 + 0.5) * 255;
-                            let b = (noise(x*0.2, y*0.2, t*0.3 + 20) * 0.5 + 0.5) * 255;
+                            // Professional Organic Geometric Transition
+                            let r = (noise(x*0.15, y*0.15, time*0.5) * 0.5 + 0.5) * 255;
+                            let g = (noise(x*0.15, y*0.15, time*0.5 + 100) * 0.5 + 0.5) * 255;
+                            let b = (noise(x*0.15, y*0.15, time*0.5 + 200) * 0.5 + 0.5) * 255;
                             draw(x, y, r, g, b);
                         }
                     }
                 }
-            }, 30); // Faster update rate for smoother animation
+            }, 33);
         }
 
         function updateGCC(v) { gcc = v / 255; }
-        function stop() { if(interval) clearInterval(interval); interval = null; }
-        function connect() { alert("Simulating BLE connection to VIOLA..."); }
+        function stopAnim() { if(animTimer) clearInterval(animTimer); animTimer = null; }
+        function initBLE() { alert("Simulating BLE Protocol v1.0 Connection..."); }
+
+        // Start Up
         window.onload = initMatrix;
     </script>
 </body>
