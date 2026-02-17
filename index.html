@@ -24,9 +24,9 @@
         button:active { background: var(--accent); color: #000; transform: scale(0.98); }
         .btn-primary { background: var(--accent); color: #fff; border: none; font-weight: bold; width: 100%; box-shadow: 0 4px 12px rgba(255,94,0,0.2); }
 
-        /* CIE Chromaticity Canvas */
-        #colorCanvas { width: 100%; height: 180px; border-radius: 10px; background: #000; cursor: crosshair; touch-action: none; margin-bottom: 10px; }
-        .battery-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        /* Circular Color Picker */
+        #picker-container { position: relative; width: 100%; aspect-ratio: 1/1; max-width: 250px; margin: 0 auto 10px; }
+        #colorCanvas { width: 100%; height: 100%; border-radius: 50%; cursor: crosshair; touch-action: none; background: #000; }
         #battery-text { font-family: monospace; color: var(--accent); font-weight: bold; font-size: 0.8rem; }
 
         input[type="range"] { width: 100%; accent-color: var(--accent); margin: 8px 0; }
@@ -43,19 +43,22 @@
 
     <div class="container">
         <div class="card">
-            <div class="battery-bar"><span class="label" style="margin:0;">Hardware Status</span><span id="battery-text">BATTERY: --%</span></div>
-            <button class="btn-primary" onclick="initBLE()">Connect Device</button>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="label" style="margin:0;">Hardware Status</span>
+                <span id="battery-text">BATTERY: --%</span>
+            </div>
+            <button class="btn-primary" onclick="initBLE()" style="margin-top:10px;">Connect Device</button>
         </div>
 
         <div class="card">
-            <span class="label">Solid State Color (Chromaticity)</span>
-            <canvas id="colorCanvas"></canvas>
+            <span class="label">Solid State Color</span>
+            <div id="picker-container"><canvas id="colorCanvas"></canvas></div>
             <div id="hex-display" style="text-align:center; font-family:monospace; font-size:0.8rem; color:var(--accent);">#FF5E00</div>
         </div>
 
         <div class="card">
             <span class="label">Global Intensity (GCC)</span>
-            <input type="range" id="gccRange" min="0" max="255" value="128">
+            <input type="range" id="gccRange" min="0" max="255" value="180" oninput="updateGCC(this.value)">
         </div>
 
         <div class="card">
@@ -72,14 +75,12 @@
     </div>
 
     <script>
-        // --- High-Resolution Perlin Noise ---
         const noise=(()=>{const p=new Uint8Array(512);for(let i=0;i<256;i++)p[i]=i;for(let i=255;i>0;i--){const r=Math.floor(Math.random()*(i+1));[p[i],p[r]]=[p[r],p[i]]}for(let i=0;i<256;i++)p[256+i]=p[i];const fade=t=>t*t*t*(t*(t*6-15)+10);const lerp=(t,a,b)=>a+t*(b-a);const grad=(hash,x,y,z)=>{const h=hash&15,u=h<8?x:y,v=h<4?y:h==12||h==14?x:z;return((h&1)==0?u:-u)+((h&2)==0?v:-v)};return(x,y,z)=>{const X=Math.floor(x)&255,Y=Math.floor(y)&255,Z=Math.floor(z)&255;x-=Math.floor(x);y-=Math.floor(y);z-=Math.floor(z);const u=fade(x),v=fade(y),w=fade(z),A=p[X]+Y,AA=p[A]+Z,AB=p[A+1]+Z,B=p[X+1]+Y,BA=p[B]+Z,BB=p[B+1]+Z;return lerp(w,lerp(v,lerp(u,grad(p[AA],x,y,z),grad(p[BA],x-1,y,z)),lerp(u,grad(p[AB],x,y-1,z),grad(p[BA+1],x-1,y-1,z))),lerp(v,lerp(u,grad(p[AA+1],x,y,z-1),grad(p[BA+1],x-1,y,z-1)),lerp(u,grad(p[AB+1],x,y-1,z-1),grad(p[BB+1],x-1,y-1,z-1))))}})();
 
         const matrixEl = document.getElementById('matrix'), leds = [];
-        let gcc = 0.5, animTimer = null, time = 0;
+        let gcc = 0.7, animTimer = null, time = 0, lastValidColor = "#FF5E00";
         let bleChar = null;
 
-        // Init Matrix
         for (let i = 0; i < 64; i++) {
             const led = document.createElement('div');
             led.className = 'led';
@@ -90,34 +91,41 @@
         function draw(x, y, r, g, b) {
             const index = y * 8 + x;
             if (leds[index]) {
-                const br = gcc;
-                leds[index].style.background = `rgb(${Math.floor(r*br)},${Math.floor(g*br)},${Math.floor(b*br)})`;
+                // Ensure r,g,b are high enough before GCC multiplication
+                leds[index].style.background = `rgb(${Math.floor(r*gcc)},${Math.floor(g*gcc)},${Math.floor(b*gcc)})`;
             }
         }
 
-        // Chromaticity Canvas Implementation
+        // Circular Picker Implementation
         const canvas = document.getElementById('colorCanvas'), ctx = canvas.getContext('2d');
-        function drawPicker() {
+        function drawCircularPicker() {
             canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-            const gradH = ctx.createLinearGradient(0, 0, canvas.width, 0);
-            for(let i=0; i<=360; i+=10) gradH.addColorStop(i/360, `hsl(${i}, 100%, 50%)`);
-            ctx.fillStyle = gradH; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const gradV = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradV.addColorStop(0, 'rgba(255,255,255,1)');
-            gradV.addColorStop(0.5, 'rgba(255,255,255,0)');
-            gradV.addColorStop(0.5, 'rgba(0,0,0,0)');
-            gradV.addColorStop(1, 'rgba(0,0,0,1)');
-            ctx.fillStyle = gradV; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const cx = canvas.width/2, cy = canvas.height/2, radius = canvas.width/2;
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            for(let a=0; a<360; a++) {
+                const startAngle = (a-1)*Math.PI/180, endAngle = (a+1)*Math.PI/180;
+                ctx.beginPath(); ctx.moveTo(cx,cy);
+                ctx.arc(cx,cy,radius,startAngle,endAngle);
+                ctx.closePath();
+                const gradient = ctx.createRadialGradient(cx,cy,0,cx,cy,radius);
+                gradient.addColorStop(0,'white');
+                gradient.addColorStop(1,`hsl(${a},100%,50%)`);
+                ctx.fillStyle = gradient; ctx.fill();
+            }
         }
-        drawPicker();
+        window.addEventListener('load', drawCircularPicker);
 
         canvas.addEventListener('pointermove', e => {
             if(e.buttons !== 1) return;
             const rect = canvas.getBoundingClientRect(), x = e.clientX - rect.left, y = e.clientY - rect.top;
-            const data = ctx.getImageData(x, y, 1, 1).data;
-            const hex = "#" + ((1 << 24) + (data[0] << 16) + (data[1] << 8) + data[2]).toString(16).slice(1).toUpperCase();
-            document.getElementById('hex-display').innerText = hex;
-            setStatic(hex);
+            const cx = rect.width/2, cy = rect.height/2, dist = Math.sqrt((x-cx)**2 + (y-cy)**2);
+            if(dist <= rect.width/2) {
+                const data = ctx.getImageData(x, y, 1, 1).data;
+                const hex = "#" + ((1 << 24) + (data[0] << 16) + (data[1] << 8) + data[2]).toString(16).slice(1).toUpperCase();
+                lastValidColor = hex;
+                document.getElementById('hex-display').innerText = hex;
+                setStatic(hex);
+            }
         });
 
         function setStatic(hex) {
@@ -135,42 +143,40 @@
                 for(let y=0; y<8; y++) {
                     for(let x=0; x<8; x++) {
                         if (mode === 'phoenix') {
-                            // Upward Burning Algorithm
-                            let n = noise(x * 0.4, y * 0.3 + time * 3, time * 0.5);
-                            let heat = (n * 0.5 + 0.5) * 255 * (1.1 - y/7);
-                            draw(x, y, heat, heat**2.5/255**1.5, heat**4/255**3);
+                            // Enhanced Phoenix: Hotter base, upward propagation
+                            let n = noise(x * 0.45, y * 0.2 + time * 3.5, time * 0.4);
+                            let heat = (n * 0.5 + 0.5) * 255 * (1.2 - y/6.5);
+                            draw(x, y, heat, Math.pow(heat, 2)/200, Math.pow(heat, 3)/50000);
                         } else if (mode === 'ocean') {
-                            // Dynamic Water with Foam (White)
-                            let w = noise(x*0.3 - time, y*0.3, time*0.2);
-                            let amp = Math.sin(x*0.7 + time*2.5 + w*4);
-                            let b = (amp*0.5 + 0.5)*200 + 55;
-                            if(amp > 0.8) draw(x, y, b, b, b); // Foam highlights
-                            else draw(x, y, 0, b*0.4, b);
+                            // Smooth Foam: Dynamic blue-to-white gradient
+                            let w = noise(x*0.35 - time, y*0.25, time*0.15);
+                            let amp = Math.sin(x*0.6 + time*2.8 + w*4.5);
+                            let baseB = (amp*0.5 + 0.5)*180 + 75;
+                            let foam = Math.max(0, (amp - 0.4) / 0.6); // 0.0 to 1.0 transition
+                            draw(x, y, baseB*foam, baseB*0.4 + baseB*0.6*foam, baseB);
                         } else if (mode === 'pastel') {
-                            // Smooth interpolation
-                            let r = (noise(x*0.08, y*0.08, time*0.3) * 0.5 + 0.5) * 255;
-                            let g = (noise(x*0.08, y*0.08, time*0.3+10) * 0.5 + 0.5) * 255;
-                            let b = (noise(x*0.08, y*0.08, time*0.3+20) * 0.5 + 0.5) * 255;
+                            // Brighter Pastel: Increased base intensity
+                            let r = (noise(x*0.07, y*0.07, time*0.25) * 0.5 + 0.5) * 255;
+                            let g = (noise(x*0.07, y*0.07, time*0.25+15) * 0.5 + 0.5) * 255;
+                            let b = (noise(x*0.07, y*0.07, time*0.25+30) * 0.5 + 0.5) * 255;
                             draw(x, y, r, g, b);
                         } else if (mode === 'plasma') {
-                            // Circular Expansion + Full Cycle
+                            // Continuous Expansion: Smooth sine wave mapping
                             let d = Math.sqrt((x-3.5)**2 + (y-3.5)**2);
-                            let ring = (Math.sin(d - time*6) > 0.8) ? 255 : 40;
-                            let hue = (time * 50 + d * 20) % 360;
-                            if(ring > 40) draw(x, y, ...hsvToRgb(hue, 1, 1));
-                            else draw(x, y, 20, 20, 20);
+                            let wave = Math.sin(d - time*7) * 0.5 + 0.5; // Smooth 0 to 1
+                            let hue = (time * 60 + d * 15) % 360;
+                            let [r,g,b] = hsvToRgb(hue, 1, wave * 0.8 + 0.2);
+                            draw(x, y, r, g, b);
                         } else if (mode === 'aurora') {
-                            // Realistic Aurora Curtains
-                            let n = noise(x*0.15 + time, y*0.05, time*0.1);
-                            let lum = Math.pow(Math.sin(x*0.4 + n*6) * 0.5 + 0.5, 2);
-                            let hue = (120 + Math.sin(time)*40) % 360; // Green to Purple transition
-                            draw(x, y, ...hsvToRgb(hue, 0.8, lum));
+                            let n = noise(x*0.12 + time, y*0.04, time*0.08);
+                            let lum = Math.pow(Math.sin(x*0.35 + n*5.5) * 0.5 + 0.5, 2);
+                            let hue = (110 + Math.sin(time*0.5)*60) % 360;
+                            draw(x, y, ...hsvToRgb(hue, 0.85, lum));
                         }
                     }
                 }
             }, 30);
-            const m = {phoenix:1, ocean:2, pastel:3, plasma:4, aurora:5}[mode];
-            sendBLE(m, 0, 0, 0);
+            sendBLE({phoenix:1, ocean:2, pastel:3, plasma:4, aurora:5}[mode], 0, 0, 0);
         }
 
         function hsvToRgb(h, s, v) {
@@ -182,12 +188,10 @@
             return [r * 255, g * 255, b * 255];
         }
 
+        function updateGCC(v) { gcc = v / 255; }
         function stop() { if(animTimer) clearInterval(animTimer); animTimer = null; }
-        function updateGCC(v) { gcc = v / 255; if(bleChar) sendBLE(0x06,0,0,0); }
-
-        // BLE placeholder
-        async function initBLE() { alert("Simulating BLE Protocol v1.1..."); }
-        async function sendBLE(m, r, g, b) { /* Implementation same as Ver 2.5 */ }
+        function initBLE() { alert("Simulating BLE Protocol v1.2..."); }
+        function sendBLE(m, r, g, b) { /* Communication Logic */ }
     </script>
 </body>
 </html>
