@@ -9,7 +9,7 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 50px; }
         .header { width: 100%; padding: 30px 0; text-align: center; background: linear-gradient(180deg, #111 0%, transparent 100%); }
         .logo-img { width: 220px; height: auto; margin-bottom: 5px; filter: drop-shadow(0 0 12px rgba(255,94,0,0.3)); }
-        h1 { margin: 0; font-size: 0.9rem; letter-spacing: 5px; font-weight: 300; color: #777; text-transform: uppercase; }
+        h1 { margin: 0; font-size: 0.8rem; letter-spacing: 5px; font-weight: 300; color: #777; text-transform: uppercase; }
         #matrix-shell { background: #000; padding: 15px; border-radius: 20px; border: 1px solid #222; box-shadow: 0 10px 40px rgba(0,0,0,1); margin: 15px 0; }
         #matrix { display: grid; grid-template-columns: repeat(8, 32px); gap: 6px; }
         .led { width: 32px; height: 32px; background: #111; border-radius: 4px; position: relative; }
@@ -20,10 +20,9 @@
         button { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
         button:active { background: var(--accent); color: #000; transform: scale(0.98); }
         .btn-primary { background: var(--accent); color: #fff; border: none; font-weight: bold; width: 100%; box-shadow: 0 4px 12px rgba(255,94,0,0.2); }
-        .text-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--text); border-radius: 8px; font-family: monospace; margin-bottom: 10px; box-sizing: border-box; }
+        .text-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--text); border-radius: 8px; font-family: monospace; margin-bottom: 10px; box-sizing: border-box; font-size: 1rem; }
         #picker-container { position: relative; width: 100%; aspect-ratio: 1/1; max-width: 200px; margin: 0 auto 10px; }
         #colorCanvas { width: 100%; height: 100%; border-radius: 50%; cursor: crosshair; touch-action: none; background: #000; }
-        #battery-text { font-family: monospace; color: var(--accent); font-weight: bold; font-size: 0.8rem; }
         input[type="range"] { width: 100%; accent-color: var(--accent); margin: 8px 0; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
@@ -40,15 +39,9 @@
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <span class="label" style="margin:0;">Hardware Status</span>
-                <span id="battery-text">BATTERY: --%</span>
+                <span id="battery-text" style="font-family:monospace; color:var(--accent); font-weight:bold; font-size:0.8rem;">BATTERY: --%</span>
             </div>
             <button class="btn-primary" onclick="initBLE()" style="margin-top:10px;">Connect Device</button>
-        </div>
-
-        <div class="card">
-            <span class="label">Scrolling Text Interface</span>
-            <input type="text" id="scrollText" class="text-input" maxlength="50" value="VIOLA ❤️">
-            <button class="btn-primary" onclick="updateTextMode()">Update & Scroll Text</button>
         </div>
 
         <div class="card">
@@ -72,6 +65,12 @@
                 <button onclick="runMode('aurora')">AURORA</button>
                 <button onclick="runMode('off')" style="color:#ff4444;">OFF</button>
             </div>
+        </div>
+
+        <div class="card">
+            <span class="label">Scrolling Text Interface</span>
+            <input type="text" id="scrollText" class="text-input" maxlength="50" value="VIOLA ❤️">
+            <button class="btn-primary" onclick="updateTextMode()">Update & Scroll Text</button>
         </div>
     </div>
 
@@ -114,19 +113,22 @@
             if(d <= r.width/2) {
                 const p = ctx.getImageData(x, y, 1, 1).data;
                 lastRGB = {r:p[0], g:p[1], b:p[2]};
-                const hex = "#" + ((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1).toUpperCase();
-                document.getElementById('hex-display').innerText = hex;
-                if(!animTimer || animTimer._mode !== 'text') setStatic(hex);
+                document.getElementById('hex-display').innerText = "#" + ((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1).toUpperCase();
+                if(!animTimer || animTimer._mode !== 'text') setStatic();
             }
         });
 
-        function setStatic(hex) {
+        function setStatic() {
             stop();
             for(let i=0; i<64; i++) draw(i%8, Math.floor(i/8), lastRGB.r, lastRGB.g, lastRGB.b);
         }
 
-        // --- 6-dot Vertical Font (Rows 1-6) ---
-        const font = {'A':[0x30,0x48,0x48,0x78,0x48,0x48],'V':[0x44,0x44,0x44,0x44,0x28,0x10],'I':[0x38,0x10,0x10,0x10,0x10,0x38],'O':[0x38,0x44,0x44,0x44,0x44,0x38],'L':[0x40,0x40,0x40,0x40,0x40,0x7C],'H':[0x44,0x44,0x44,0x7C,0x44,0x44],'R':[0x78,0x44,0x44,0x78,0x50,0x48],'T':[0x7C,0x10,0x10,0x10,0x10,0x10],' ':[0,0,0,0,0,0],'❤️':[0x24,0x7E,0x7E,0x3C,0x18,0x00]};
+        // --- Tight 5-width Font (Rows 1-6) ---
+        const font = {
+            'A':[0x0E,0x11,0x11,0x1F,0x11,0x11],'V':[0x11,0x11,0x11,0x11,0x0A,0x04],'I':[0x0E,0x04,0x04,0x04,0x04,0x0E],
+            'O':[0x0E,0x11,0x11,0x11,0x11,0x0E],'L':[0x10,0x10,0x10,0x10,0x10,0x1F],'H':[0x11,0x11,0x11,0x1F,0x11,0x11],
+            'R':[0x1E,0x11,0x11,0x1E,0x14,0x12],'T':[0x1F,0x04,0x04,0x04,0x04,0x04],' ':[0,0,0,0,0,0],'❤️':[0x0A,0x1F,0x1F,0x0E,0x04,0x00]
+        };
 
         function updateTextMode() {
             currentMsg = (document.getElementById('scrollText').value || " ").toUpperCase();
@@ -166,15 +168,19 @@
                             let hue = (110 + y * 20 + Math.sin(time)*50) % 360; 
                             draw(x, y, ...hsvToRgb(hue, 0.9, lum));
                         } else if (mode === 'text') {
-                            const scrollSpeed = 15;
-                            let charIdx = Math.floor((x + time * scrollSpeed) / 8) % currentMsg.length;
-                            let charData = font[currentMsg[charIdx]] || font[' '];
-                            // Black out Row 0 and Row 7
+                            const speed = 12, step = 6;
+                            let msgArr = Array.from(currentMsg);
+                            let totalX = x + Math.floor(time * speed);
+                            let charIdx = Math.floor(totalX / step) % msgArr.length;
+                            let localX = totalX % step;
                             if (y === 0 || y === 7) {
                                 draw(x, y, 10, 10, 10);
                             } else {
-                                // Map y to font data (y=1~6 maps to index 0~5)
-                                let pixel = (charData[y - 1] >> (7 - (x + Math.floor(time * scrollSpeed)) % 8)) & 1;
+                                let pixel = 0;
+                                if (localX < 5) { // 5px width char
+                                    let charData = font[msgArr[charIdx]] || font[' '];
+                                    pixel = (charData[y - 1] >> (4 - localX)) & 1;
+                                }
                                 if (pixel) draw(x, y, lastRGB.r, lastRGB.g, lastRGB.b);
                                 else draw(x, y, 20, 20, 20);
                             }
