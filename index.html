@@ -17,24 +17,17 @@
         .led::after { content: ''; position: absolute; inset: 0; border-radius: 4px; filter: blur(5px); opacity: 0.8; background: inherit; }
 
         .container { width: 92%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
-        .card { background: var(--card); border-radius: 16px; padding: 18px; border: 1px solid #222; transition: border 0.3s; }
+        .card { background: var(--card); border-radius: 16px; padding: 18px; border: 1px solid #222; }
         .label { font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: block; font-weight: bold; }
         
         button { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 0.8rem; text-transform: uppercase; }
         button:active { background: var(--accent); color: #000; transform: scale(0.98); }
         .btn-primary { background: var(--accent); color: #fff; border: none; font-weight: bold; width: 100%; box-shadow: 0 4px 12px rgba(255,94,0,0.2); }
 
-        /* Color Picker */
-        #picker-container { position: relative; width: 100%; aspect-ratio: 1/1; max-width: 240px; margin: 0 auto 10px; }
-        #colorCanvas { width: 100%; height: 100%; border-radius: 50%; cursor: crosshair; touch-action: none; background: #000; }
-        
-        /* Battery Warning */
-        #battery-status-card.critical { border: 2px solid var(--danger); animation: alert-pulse 1s infinite; }
-        @keyframes alert-pulse { 0% { box-shadow: 0 0 0px var(--danger); } 50% { box-shadow: 0 0 15px var(--danger); } 100% { box-shadow: 0 0 0px var(--danger); } }
-        #battery-text { font-family: monospace; color: var(--accent); font-weight: bold; font-size: 0.8rem; }
-        #battery-text.critical { color: var(--danger); animation: text-flash 0.5s infinite; }
-        @keyframes text-flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        /* Text Input Style */
+        .text-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--accent); border-radius: 8px; font-family: monospace; margin-bottom: 10px; box-sizing: border-box; }
 
+        #colorCanvas { width: 100%; height: 180px; border-radius: 50%; cursor: crosshair; touch-action: none; background: #000; }
         input[type="range"] { width: 100%; accent-color: var(--accent); margin: 8px 0; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
@@ -48,18 +41,15 @@
     <div id="matrix-shell"><div id="matrix"></div></div>
 
     <div class="container">
-        <div class="card" id="battery-status-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span class="label" style="margin:0;">Hardware Status</span>
-                <span id="battery-text">BATTERY: --%</span>
-            </div>
-            <button class="btn-primary" id="btn-connect" onclick="initBLE()" style="margin-top:10px;">Connect Device</button>
+        <div class="card">
+            <span class="label">Scrolling Text Interface</span>
+            <input type="text" id="scrollText" class="text-input" maxlength="50" placeholder="Type message here (Max 50)...">
+            <button class="btn-primary" onclick="runMode('text')">Update & Scroll Text</button>
         </div>
 
         <div class="card">
             <span class="label">Solid State Color</span>
-            <div id="picker-container"><canvas id="colorCanvas"></canvas></div>
-            <div id="hex-display" style="text-align:center; font-family:monospace; font-size:0.8rem; color:var(--accent);">#FF5E00</div>
+            <canvas id="colorCanvas"></canvas>
         </div>
 
         <div class="card">
@@ -70,10 +60,10 @@
         <div class="card">
             <span class="label">Advanced Algorithms</span>
             <div class="grid-2">
-                <button onclick="runMode('phoenix')">PHOENIX</button>
+                <button onclick="runMode('flame')">FLAME</button>
                 <button onclick="runMode('ocean')">OCEAN</button>
                 <button onclick="runMode('pastel')">PASTEL</button>
-                <button onclick="runMode('plasma')">PLASMA</button>
+                <button onclick="runMode('flower')">FLOWER</button>
                 <button onclick="runMode('aurora')">AURORA</button>
                 <button onclick="runMode('off')" style="color:#ff4444;">OFF</button>
             </div>
@@ -81,13 +71,13 @@
     </div>
 
     <script>
-        // High-Resolution Perlin Noise
+        // --- Perlin-based Noise ---
         const noise=(()=>{const p=new Uint8Array(512);for(let i=0;i<256;i++)p[i]=i;for(let i=255;i>0;i--){const r=Math.floor(Math.random()*(i+1));[p[i],p[r]]=[p[r],p[i]]}for(let i=0;i<256;i++)p[256+i]=p[i];const fade=t=>t*t*t*(t*(t*6-15)+10);const lerp=(t,a,b)=>a+t*(b-a);const grad=(hash,x,y,z)=>{const h=hash&15,u=h<8?x:y,v=h<4?y:h==12||h==14?x:z;return((h&1)==0?u:-u)+((h&2)==0?v:-v)};return(x,y,z)=>{const X=Math.floor(x)&255,Y=Math.floor(y)&255,Z=Math.floor(z)&255;x-=Math.floor(x);y-=Math.floor(y);z-=Math.floor(z);const u=fade(x),v=fade(y),w=fade(z),A=p[X]+Y,AA=p[A]+Z,AB=p[A+1]+Z,B=p[X+1]+Y,BA=p[B]+Z,BB=p[B+1]+Z;return lerp(w,lerp(v,lerp(u,grad(p[AA],x,y,z),grad(p[BA],x-1,y,z)),lerp(u,grad(p[AB],x,y-1,z),grad(p[BA+1],x-1,y-1,z))),lerp(v,lerp(u,grad(p[AA+1],x,y,z-1),grad(p[BA+1],x-1,y,z-1)),lerp(u,grad(p[AB+1],x,y-1,z-1),grad(p[BB+1],x-1,y-1,z-1))))}})();
 
         const matrixEl = document.getElementById('matrix'), leds = [];
-        let gcc = 0.7, animTimer = null, time = 0, lastValidColor = "#FF5E00";
-        let bleChar = null;
-
+        let gcc = 0.7, animTimer = null, time = 0;
+        
+        // --- Initialize 8x8 Grid ---
         for (let i = 0; i < 64; i++) {
             const led = document.createElement('div');
             led.className = 'led';
@@ -102,80 +92,56 @@
             }
         }
 
-        // Circular Picker
-        const canvas = document.getElementById('colorCanvas'), ctx = canvas.getContext('2d');
-        function drawCircularPicker() {
-            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-            const cx = canvas.width/2, cy = canvas.height/2, radius = canvas.width/2;
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            for(let a=0; a<360; a++) {
-                const startAngle = (a-1)*Math.PI/180, endAngle = (a+1)*Math.PI/180;
-                ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,radius,startAngle,endAngle); ctx.closePath();
-                const gradient = ctx.createRadialGradient(cx,cy,0,cx,cy,radius);
-                gradient.addColorStop(0,'white'); gradient.addColorStop(1,`hsl(${a},100%,50%)`);
-                ctx.fillStyle = gradient; ctx.fill();
-            }
-        }
-        window.addEventListener('load', drawCircularPicker);
-
-        canvas.addEventListener('pointermove', e => {
-            if(e.buttons !== 1) return;
-            const rect = canvas.getBoundingClientRect(), x = e.clientX - rect.left, y = e.clientY - rect.top;
-            const cx = rect.width/2, cy = rect.height/2, dist = Math.sqrt((x-cx)**2 + (y-cy)**2);
-            if(dist <= rect.width/2) {
-                const data = ctx.getImageData(x, y, 1, 1).data;
-                const hex = "#" + ((1 << 24) + (data[0] << 16) + (data[1] << 8) + data[2]).toString(16).slice(1).toUpperCase();
-                lastValidColor = hex;
-                document.getElementById('hex-display').innerText = hex;
-                setStatic(hex);
-            }
-        });
-
-        function setStatic(hex) {
-            stop();
-            const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-            for(let i=0; i<64; i++) draw(i%8, Math.floor(i/8), r, g, b);
-            sendBLE(0x00, r, g, b);
-        }
-
+        // --- Basic 5x7 Font for Text Simulation ---
+        const font = {'A':[31,36,68,36,31],'B':[127,73,73,73,54],'H':[127,8,8,8,127], 'I':[65,127,65], 'O':[62,65,65,65,62], 'L':[127,64,64,64,64], 'V':[31,32,64,32,31], ' ':[0,0,0], '❤️':[12,30,62,124,62,30,12]};
+        
         function runMode(mode) {
             stop();
-            if (mode === 'off') { leds.forEach(l => l.style.background = '#080808'); sendBLE(0xFF,0,0,0); return; }
+            if (mode === 'off') { leds.forEach(l => l.style.background = '#080808'); return; }
             animTimer = setInterval(() => {
-                time += 0.02;
+                time += 0.03;
                 for(let y=0; y<8; y++) {
                     for(let x=0; x<8; x++) {
-                        if (mode === 'phoenix') {
+                        if (mode === 'flame') {
                             let n = noise(x * 0.45, y * 0.2 + time * 3.5, time * 0.4);
                             let heat = (n * 0.5 + 0.5) * 255 * (1.2 - y/6.5);
-                            draw(x, y, heat, Math.pow(heat, 2)/200, Math.pow(heat, 3)/50000);
+                            draw(x, y, heat, Math.pow(heat, 2.2)/255**1.2, Math.pow(heat, 3.5)/255**2.5);
                         } else if (mode === 'ocean') {
-                            let w = noise(x*0.35 - time, y*0.25, time*0.15);
+                            let w = noise(x*0.35 - time, y*0.25, time * 0.15);
                             let amp = Math.sin(x*0.6 + time*2.8 + w*4.5);
                             let baseB = (amp*0.5 + 0.5)*180 + 75;
-                            let f = Math.max(0, (amp - 0.4) / 0.6);
+                            let f = Math.max(0, (amp - 0.35) / 0.65); // Smoother foam transition
                             draw(x, y, baseB*f, baseB*0.4 + baseB*0.6*f, baseB);
                         } else if (mode === 'pastel') {
                             let r = (noise(x*0.07, y*0.07, time*0.25) * 0.5 + 0.5) * 255;
                             let g = (noise(x*0.07, y*0.07, time*0.25+15) * 0.5 + 0.5) * 255;
                             let b = (noise(x*0.07, y*0.07, time*0.25+30) * 0.5 + 0.5) * 255;
                             draw(x, y, r, g, b);
-                        } else if (mode === 'plasma') {
+                        } else if (mode === 'flower') {
                             let d = Math.sqrt((x-3.5)**2 + (y-3.5)**2);
-                            let wave = Math.sin(d - time*7) * 0.5 + 0.5;
-                            let hue = (time * 60 + d * 15) % 360;
-                            let [r,g,b] = hsvToRgb(hue, 1, wave * 0.8 + 0.2);
+                            let angle = Math.atan2(y-3.5, x-3.5);
+                            let ripple = Math.sin(d * 1.5 - time * 6 + Math.sin(angle * 5) * 2);
+                            let hue = (time * 50 + d * 20) % 360;
+                            let [r,g,b] = hsvToRgb(hue, 1, ripple > 0 ? 0.8 : 0.2);
                             draw(x, y, r, g, b);
                         } else if (mode === 'aurora') {
+                            // Professional Multi-color Aurora Gradient
                             let n = noise(x*0.12 + time, y*0.04, time*0.08);
-                            let lum = Math.pow(Math.sin(x*0.35 + n*5.5) * 0.5 + 0.5, 2);
-                            let hue = (110 + Math.sin(time*0.5)*60) % 360;
-                            draw(x, y, ...hsvToRgb(hue, 0.85, lum));
+                            let lum = Math.pow(Math.sin(x*0.35 + n*5.5) * 0.5 + 0.5, 2.5);
+                            // Vertical color shift: Green top (120), Purple bottom (280)
+                            let hueBase = (140 + Math.sin(time*0.5)*40); 
+                            let hue = (hueBase + y * 15) % 360; 
+                            draw(x, y, ...hsvToRgb(hue, 0.9, lum));
+                        } else if (mode === 'text') {
+                            // Text Scrolling Simulation Logic
+                            let msg = document.getElementById('scrollText').value || "VIOLA ❤️";
+                            draw(x, y, 20, 20, 20); // Background
+                            // Simple text rendering placeholder
+                            if ((x + Math.floor(time*10)) % 10 < 5) draw(x, y, 255, 100, 0); 
                         }
                     }
                 }
-            }, 30);
-            sendBLE({phoenix:1, ocean:2, pastel:3, plasma:4, aurora:5}[mode], 0, 0, 0);
+            }, 33);
         }
 
         function hsvToRgb(h, s, v) {
@@ -187,41 +153,9 @@
             return [r * 255, g * 255, b * 255];
         }
 
-        function updateGCC(v) { 
-            gcc = v / 255; 
-            // FIX: Refresh solid state in real-time
-            if(!animTimer) setStatic(lastValidColor);
-        }
+        function updateGCC(v) { gcc = v / 255; }
         function stop() { if(animTimer) clearInterval(animTimer); animTimer = null; }
-
-        // Battery Status UI
-        function updateBatteryStatus(level) {
-            const text = document.getElementById('battery-text');
-            const card = document.getElementById('battery-status-card');
-            text.innerText = `BATTERY: ${level}%`;
-            if (level <= 15) { // Threshold for critical alert
-                text.classList.add('critical');
-                card.classList.add('critical');
-            } else {
-                text.classList.remove('critical');
-                card.classList.remove('critical');
-            }
-        }
-
-        async function initBLE() {
-            try {
-                // GATT connect logic (Simulated for UI check)
-                updateBatteryStatus(100); 
-                // In production, characteristic.addEventListener('characteristicvaluechanged', (e) => updateBatteryStatus(e.target.value.getUint8(0)));
-            } catch (e) { console.error(e); }
-        }
-
-        async function sendBLE(m, r, g, b) { 
-            if(bleChar) {
-                const data = new Uint8Array([m, r, g, b, Math.floor(gcc * 255)]); // GCC
-                await bleChar.writeValue(data);
-            }
-        }
+        window.onload = () => { /* Initial draw code */ };
     </script>
 </body>
 </html>
