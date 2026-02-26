@@ -10,28 +10,20 @@
         .header { width: 100%; padding: 30px 0; text-align: center; background: linear-gradient(180deg, #111 0%, transparent 100%); }
         .logo-img { width: 220px; height: auto; margin-bottom: 5px; filter: drop-shadow(0 0 12px rgba(255,94,0,0.3)); }
         h1 { margin: 0; font-size: 0.9rem; letter-spacing: 5px; font-weight: 300; color: #777; text-transform: uppercase; }
-        
         #matrix-shell { background: #000; padding: 15px; border-radius: 20px; border: 1px solid #222; box-shadow: 0 10px 40px rgba(0,0,0,1); margin: 15px 0; }
-        #matrix { display: grid; grid-template-columns: repeat(8, 30px); gap: 5px; }
-        .led { width: 30px; height: 30px; background: #111; border-radius: 4px; position: relative; }
+        #matrix { display: grid; grid-template-columns: repeat(8, 32px); gap: 6px; }
+        .led { width: 32px; height: 32px; background: #111; border-radius: 4px; position: relative; }
         .led::after { content: ''; position: absolute; inset: 0; border-radius: 4px; filter: blur(5px); opacity: 0.8; background: inherit; }
-
         .container { width: 92%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
         .card { background: var(--card); border-radius: 16px; padding: 18px; border: 1px solid #222; }
         .label { font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: block; font-weight: bold; }
-        
         button { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
         button:active { background: var(--accent); color: #000; transform: scale(0.98); }
         .btn-primary { background: var(--accent); color: #fff; border: none; font-weight: bold; width: 100%; box-shadow: 0 4px 12px rgba(255,94,0,0.2); }
-
-        /* Text Input */
-        .text-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--accent); border-radius: 8px; font-family: monospace; margin-bottom: 10px; box-sizing: border-box; }
-
-        /* Circular Picker */
+        .text-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--text); border-radius: 8px; font-family: monospace; margin-bottom: 10px; box-sizing: border-box; }
         #picker-container { position: relative; width: 100%; aspect-ratio: 1/1; max-width: 200px; margin: 0 auto 10px; }
         #colorCanvas { width: 100%; height: 100%; border-radius: 50%; cursor: crosshair; touch-action: none; background: #000; }
         #battery-text { font-family: monospace; color: var(--accent); font-weight: bold; font-size: 0.8rem; }
-
         input[type="range"] { width: 100%; accent-color: var(--accent); margin: 8px 0; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
@@ -55,14 +47,14 @@
 
         <div class="card">
             <span class="label">Scrolling Text Interface</span>
-            <input type="text" id="scrollText" class="text-input" maxlength="50" placeholder="Type message (A-Z, 0-9, ❤️)">
-            <button class="btn-primary" onclick="runMode('text')">Update & Scroll Text</button>
+            <input type="text" id="scrollText" class="text-input" maxlength="50" value="VIOLA ❤️">
+            <button class="btn-primary" onclick="updateTextMode()">Update & Scroll Text</button>
         </div>
 
         <div class="card">
             <span class="label">Solid State Color</span>
             <div id="picker-container"><canvas id="colorCanvas"></canvas></div>
-            <div id="hex-display" style="text-align:center; font-family:monospace; font-size:0.8rem; color:var(--accent);">#FF5E00</div>
+            <div id="hex-display" style="text-align:center; font-family:monospace; font-size:0.8rem; color:var(--accent);">#FFFFFF</div>
         </div>
 
         <div class="card">
@@ -87,7 +79,8 @@
         const noise=(()=>{const p=new Uint8Array(512);for(let i=0;i<256;i++)p[i]=i;for(let i=255;i>0;i--){const r=Math.floor(Math.random()*(i+1));[p[i],p[r]]=[p[r],p[i]]}for(let i=0;i<256;i++)p[256+i]=p[i];const fade=t=>t*t*t*(t*(t*6-15)+10),lerp=(t,a,b)=>a+t*(b-a),grad=(hash,x,y,z)=>{const h=hash&15,u=h<8?x:y,v=h<4?y:h==12||h==14?x:z;return((h&1)==0?u:-u)+((h&2)==0?v:-v)};return(x,y,z)=>{const X=Math.floor(x)&255,Y=Math.floor(y)&255,Z=Math.floor(z)&255;x-=Math.floor(x);y-=Math.floor(y);z-=Math.floor(z);const u=fade(x),v=fade(y),w=fade(z),A=p[X]+Y,AA=p[A]+Z,AB=p[A+1]+Z,B=p[X+1]+Y,BA=p[B]+Z,BB=p[B+1]+Z;return lerp(w,lerp(v,lerp(u,grad(p[AA],x,y,z),grad(p[BA],x-1,y,z)),lerp(u,grad(p[AB],x,y-1,z),grad(p[BA+1],x-1,y-1,z))),lerp(v,lerp(u,grad(p[AA+1],x,y,z-1),grad(p[BA+1],x-1,y,z-1)),lerp(u,grad(p[AB+1],x,y-1,z-1),grad(p[BB+1],x-1,y-1,z-1))))}})();
 
         const matrixEl = document.getElementById('matrix'), leds = [];
-        let gcc = 0.7, animTimer = null, time = 0, lastHex = "#FF5E00";
+        let gcc = 0.7, animTimer = null, time = 0, currentMsg = "VIOLA ❤️";
+        let lastRGB = {r:255, g:255, b:255}; 
 
         for (let i = 0; i < 64; i++) {
             const led = document.createElement('div');
@@ -101,7 +94,6 @@
             if (leds[idx]) leds[idx].style.background = `rgb(${Math.floor(r*gcc)},${Math.floor(g*gcc)},${Math.floor(b*gcc)})`;
         }
 
-        // --- Circular Palette [RESTORED] ---
         const canvas = document.getElementById('colorCanvas'), ctx = canvas.getContext('2d');
         function drawPalette() {
             canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
@@ -121,20 +113,25 @@
             const cx = r.width/2, cy = r.height/2, d = Math.sqrt((x-cx)**2+(y-cy)**2);
             if(d <= r.width/2) {
                 const p = ctx.getImageData(x, y, 1, 1).data;
-                lastHex = "#" + ((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1).toUpperCase();
-                document.getElementById('hex-display').innerText = lastHex;
-                setStatic(lastHex);
+                lastRGB = {r:p[0], g:p[1], b:p[2]};
+                const hex = "#" + ((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1).toUpperCase();
+                document.getElementById('hex-display').innerText = hex;
+                if(!animTimer || animTimer._mode !== 'text') setStatic(hex);
             }
         });
 
         function setStatic(hex) {
             stop();
-            const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-            for(let i=0; i<64; i++) draw(i%8, Math.floor(i/8), r, g, b);
+            for(let i=0; i<64; i++) draw(i%8, Math.floor(i/8), lastRGB.r, lastRGB.g, lastRGB.b);
         }
 
-        // --- 8x8 Text Engine ---
-        const font = {'A':[0x1C,0x22,0x22,0x3E,0x22,0x22,0x22],'V':[0x22,0x22,0x22,0x22,0x22,0x14,0x08],'I':[0x1C,0x08,0x08,0x08,0x08,0x08,0x1C],'O':[0x1C,0x22,0x22,0x22,0x22,0x22,0x1C],'L':[0x20,0x20,0x20,0x20,0x20,0x20,0x3E],'H':[0x22,0x22,0x22,0x3E,0x22,0x22,0x22],'R':[0x3C,0x22,0x22,0x3C,0x2A,0x26,0x22],'T':[0x3E,0x08,0x08,0x08,0x08,0x08,0x08],' ':[0,0,0,0,0,0,0], '❤️':[0x24,0x7E,0x7E,0x7E,0x3C,0x18,0x00]};
+        // --- 6-dot Vertical Font (Rows 1-6) ---
+        const font = {'A':[0x30,0x48,0x48,0x78,0x48,0x48],'V':[0x44,0x44,0x44,0x44,0x28,0x10],'I':[0x38,0x10,0x10,0x10,0x10,0x38],'O':[0x38,0x44,0x44,0x44,0x44,0x38],'L':[0x40,0x40,0x40,0x40,0x40,0x7C],'H':[0x44,0x44,0x44,0x7C,0x44,0x44],'R':[0x78,0x44,0x44,0x78,0x50,0x48],'T':[0x7C,0x10,0x10,0x10,0x10,0x10],' ':[0,0,0,0,0,0],'❤️':[0x24,0x7E,0x7E,0x3C,0x18,0x00]};
+
+        function updateTextMode() {
+            currentMsg = (document.getElementById('scrollText').value || " ").toUpperCase();
+            runMode('text');
+        }
 
         function runMode(mode) {
             stop();
@@ -158,28 +155,34 @@
                             let b = (noise(x*0.07, y*0.07, time*0.25+30)*0.5+0.5)*255;
                             draw(x, y, r, g, b);
                         } else if (mode === 'flower') {
-                            // REVERTED TO PREVIOUS PLASMA ALGORITHM
                             let d = Math.sqrt((x-3.5)**2 + (y-3.5)**2);
                             let wave = Math.sin(d - time*7) * 0.5 + 0.5;
                             let hue = (time * 60 + d * 15) % 360;
                             let [r,g,b] = hsvToRgb(hue, 1, wave * 0.8 + 0.2);
                             draw(x, y, r, g, b);
                         } else if (mode === 'aurora') {
-                            // ENHANCED VERTICAL GRADIENT
                             let n = noise(x*0.12+time, y*0.04, time*0.08);
                             let lum = Math.pow(Math.sin(x*0.35+n*5.5)*0.5+0.5, 2.5);
                             let hue = (110 + y * 20 + Math.sin(time)*50) % 360; 
                             draw(x, y, ...hsvToRgb(hue, 0.9, lum));
                         } else if (mode === 'text') {
-                            let msg = (document.getElementById('scrollText').value || "VIOLA ❤️").toUpperCase();
-                            let charIdx = Math.floor((x + time*20)/8) % msg.length;
-                            let char = font[msg[charIdx]] || font[' '];
-                            let pixel = (char[y] >> (7 - (x + Math.floor(time*20))%8)) & 1;
-                            draw(x, y, pixel?255:20, pixel?100:20, pixel?0:20);
+                            const scrollSpeed = 15;
+                            let charIdx = Math.floor((x + time * scrollSpeed) / 8) % currentMsg.length;
+                            let charData = font[currentMsg[charIdx]] || font[' '];
+                            // Black out Row 0 and Row 7
+                            if (y === 0 || y === 7) {
+                                draw(x, y, 10, 10, 10);
+                            } else {
+                                // Map y to font data (y=1~6 maps to index 0~5)
+                                let pixel = (charData[y - 1] >> (7 - (x + Math.floor(time * scrollSpeed)) % 8)) & 1;
+                                if (pixel) draw(x, y, lastRGB.r, lastRGB.g, lastRGB.b);
+                                else draw(x, y, 20, 20, 20);
+                            }
                         }
                     }
                 }
             }, 30);
+            animTimer._mode = mode;
         }
 
         function hsvToRgb(h, s, v) {
@@ -191,7 +194,7 @@
             return [r * 255, g * 255, b * 255];
         }
 
-        function updateGCC(v) { gcc = v / 255; if(!animTimer) setStatic(lastHex); }
+        function updateGCC(v) { gcc = v / 255; if(!animTimer || animTimer._mode === 'off') setStatic(); }
         function stop() { if(animTimer) clearInterval(animTimer); animTimer = null; }
         function initBLE() { alert("BLE Initialization..."); }
     </script>
