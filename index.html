@@ -18,7 +18,6 @@
         .card { background: var(--card); border-radius: 16px; padding: 18px; border: 1px solid #222; }
         .label { font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: block; font-weight: bold; }
         button { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-        button:active { background: var(--accent); color: #000; transform: scale(0.98); }
         .btn-primary { background: var(--accent); color: #fff; border: none; font-weight: bold; width: 100%; box-shadow: 0 4px 12px rgba(255,94,0,0.2); }
         .text-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--text); border-radius: 8px; font-family: monospace; margin-bottom: 10px; box-sizing: border-box; font-size: 1rem; }
         #picker-container { position: relative; width: 100%; aspect-ratio: 1/1; max-width: 200px; margin: 0 auto 10px; }
@@ -69,7 +68,7 @@
 
         <div class="card">
             <span class="label">Scrolling Text Interface</span>
-            <input type="text" id="scrollText" class="text-input" maxlength="50" value="VIOLA ❤️">
+            <input type="text" id="scrollText" class="text-input" maxlength="50" value="VIOLA ❤">
             <button class="btn-primary" onclick="updateTextMode()">Update & Scroll Text</button>
         </div>
     </div>
@@ -78,7 +77,7 @@
         const noise=(()=>{const p=new Uint8Array(512);for(let i=0;i<256;i++)p[i]=i;for(let i=255;i>0;i--){const r=Math.floor(Math.random()*(i+1));[p[i],p[r]]=[p[r],p[i]]}for(let i=0;i<256;i++)p[256+i]=p[i];const fade=t=>t*t*t*(t*(t*6-15)+10),lerp=(t,a,b)=>a+t*(b-a),grad=(hash,x,y,z)=>{const h=hash&15,u=h<8?x:y,v=h<4?y:h==12||h==14?x:z;return((h&1)==0?u:-u)+((h&2)==0?v:-v)};return(x,y,z)=>{const X=Math.floor(x)&255,Y=Math.floor(y)&255,Z=Math.floor(z)&255;x-=Math.floor(x);y-=Math.floor(y);z-=Math.floor(z);const u=fade(x),v=fade(y),w=fade(z),A=p[X]+Y,AA=p[A]+Z,AB=p[A+1]+Z,B=p[X+1]+Y,BA=p[B]+Z,BB=p[B+1]+Z;return lerp(w,lerp(v,lerp(u,grad(p[AA],x,y,z),grad(p[BA],x-1,y,z)),lerp(u,grad(p[AB],x,y-1,z),grad(p[BA+1],x-1,y-1,z))),lerp(v,lerp(u,grad(p[AA+1],x,y,z-1),grad(p[BA+1],x-1,y,z-1)),lerp(u,grad(p[AB+1],x,y-1,z-1),grad(p[BB+1],x-1,y-1,z-1))))}})();
 
         const matrixEl = document.getElementById('matrix'), leds = [];
-        let gcc = 0.7, animTimer = null, time = 0, currentMsg = "VIOLA ❤️";
+        let gcc = 0.7, animTimer = null, time = 0, currentMsg = "VIOLA ❤";
         let lastRGB = {r:255, g:255, b:255}; 
 
         for (let i = 0; i < 64; i++) {
@@ -123,15 +122,24 @@
             for(let i=0; i<64; i++) draw(i%8, Math.floor(i/8), lastRGB.r, lastRGB.g, lastRGB.b);
         }
 
-        // --- Tight 5-width Font (Rows 1-6) ---
+        // --- FULL A-Z 5-width Font (Rows 1-6) ---
         const font = {
-            'A':[0x0E,0x11,0x11,0x1F,0x11,0x11],'V':[0x11,0x11,0x11,0x11,0x0A,0x04],'I':[0x0E,0x04,0x04,0x04,0x04,0x0E],
-            'O':[0x0E,0x11,0x11,0x11,0x11,0x0E],'L':[0x10,0x10,0x10,0x10,0x10,0x1F],'H':[0x11,0x11,0x11,0x1F,0x11,0x11],
-            'R':[0x1E,0x11,0x11,0x1E,0x14,0x12],'T':[0x1F,0x04,0x04,0x04,0x04,0x04],' ':[0,0,0,0,0,0],'❤️':[0x0A,0x1F,0x1F,0x0E,0x04,0x00]
+            'A':[0x0E,0x11,0x11,0x1F,0x11,0x11],'B':[0x1E,0x11,0x1E,0x11,0x11,0x1E],'C':[0x0F,0x10,0x10,0x10,0x10,0x0F],
+            'D':[0x1E,0x11,0x11,0x11,0x11,0x1E],'E':[0x1F,0x10,0x1E,0x10,0x10,0x1F],'F':[0x1F,0x10,0x1E,0x10,0x10,0x10],
+            'G':[0x0F,0x10,0x17,0x11,0x11,0x0F],'H':[0x11,0x11,0x1F,0x11,0x11,0x11],'I':[0x0E,0x04,0x04,0x04,0x04,0x0E],
+            'J':[0x07,0x02,0x02,0x02,0x12,0x0C],'K':[0x11,0x12,0x1C,0x12,0x11,0x11],'L':[0x10,0x10,0x10,0x10,0x10,0x1F],
+            'M':[0x11,0x1B,0x15,0x11,0x11,0x11],'N':[0x11,0x19,0x15,0x13,0x11,0x11],'O':[0x0E,0x11,0x11,0x11,0x11,0x0E],
+            'P':[0x1E,0x11,0x1E,0x10,0x10,0x10],'Q':[0x0E,0x11,0x11,0x15,0x12,0x0D],'R':[0x1E,0x11,0x1E,0x14,0x12,0x11],
+            'S':[0x0F,0x10,0x0E,0x01,0x01,0x1E],'T':[0x1F,0x04,0x04,0x04,0x04,0x04],'U':[0x11,0x11,0x11,0x11,0x11,0x0E],
+            'V':[0x11,0x11,0x11,0x11,0x0A,0x04],'W':[0x11,0x11,0x11,0x15,0x1B,0x11],'X':[0x11,0x11,0x0A,0x04,0x0A,0x11],
+            'Y':[0x11,0x11,0x0A,0x04,0x04,0x04],'Z':[0x1F,0x02,0x04,0x08,0x10,0x1F],' ':[0,0,0,0,0,0],
+            '❤':[0x0A,0x1F,0x1F,0x0E,0x04,0x00] // Emoji Heart
         };
 
         function updateTextMode() {
-            currentMsg = (document.getElementById('scrollText').value || " ").toUpperCase();
+            // Clean string and replace common heart variations
+            let raw = document.getElementById('scrollText').value;
+            currentMsg = raw.replace(/❤️|❤/g, "❤").toUpperCase();
             runMode('text');
         }
 
@@ -177,7 +185,7 @@
                                 draw(x, y, 10, 10, 10);
                             } else {
                                 let pixel = 0;
-                                if (localX < 5) { // 5px width char
+                                if (localX < 5) {
                                     let charData = font[msgArr[charIdx]] || font[' '];
                                     pixel = (charData[y - 1] >> (4 - localX)) & 1;
                                 }
