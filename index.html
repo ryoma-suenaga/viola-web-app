@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,6 @@
         :root { --accent: #ff5e00; --bg: #050505; --card: #141414; --text: #ffffff; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 50px; }
         .header { width: 100%; padding: 30px 0; text-align: center; background: linear-gradient(180deg, #111 0%, transparent 100%); }
-        .logo-img { width: 220px; height: auto; margin-bottom: 5px; filter: drop-shadow(0 0 12px rgba(255,94,0,0.3)); }
         h1 { margin: 0; font-size: 0.8rem; letter-spacing: 5px; font-weight: 300; color: #777; text-transform: uppercase; }
         #matrix-shell { background: #000; padding: 15px; border-radius: 20px; border: 1px solid #222; box-shadow: 0 10px 40px rgba(0,0,0,1); margin: 15px 0; }
         #matrix { display: grid; grid-template-columns: repeat(8, 32px); gap: 6px; }
@@ -20,15 +19,12 @@
         button { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
         .btn-primary { background: var(--accent); color: #fff; border: none; font-weight: bold; width: 100%; box-shadow: 0 4px 12px rgba(255,94,0,0.2); }
         .text-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--text); border-radius: 8px; font-family: monospace; margin-bottom: 10px; box-sizing: border-box; font-size: 1rem; }
-        #picker-container { position: relative; width: 100%; aspect-ratio: 1/1; max-width: 200px; margin: 0 auto 10px; }
-        #colorCanvas { width: 100%; height: 100%; border-radius: 50%; cursor: crosshair; touch-action: none; background: #000; }
-        input[type="range"] { width: 100%; accent-color: var(--accent); margin: 8px 0; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        input[type="range"] { width: 100%; accent-color: var(--accent); margin: 8px 0; }
     </style>
 </head>
 <body>
     <div class="header">
-        <img src="Logo.png" alt="ams OSRAM" class="logo-img">
         <h1>VIOLA MATRIX CONTROLLER</h1>
     </div>
 
@@ -40,22 +36,16 @@
                 <span class="label" style="margin:0;">Hardware Status</span>
                 <span id="battery-text" style="font-family:monospace; color:var(--accent); font-weight:bold; font-size:0.8rem;">BATTERY: --%</span>
             </div>
-            <button class="btn-primary" onclick="initBLE()" style="margin-top:10px;">Connect Device</button>
-        </div>
-
-        <div class="card">
-            <span class="label">Solid State Color</span>
-            <div id="picker-container"><canvas id="colorCanvas"></canvas></div>
-            <div id="hex-display" style="text-align:center; font-family:monospace; font-size:0.8rem; color:var(--accent);">#FFFFFF</div>
+            <button id="connectBtn" class="btn-primary" onclick="initBLE()" style="margin-top:10px;">Connect Device</button>
         </div>
 
         <div class="card">
             <span class="label">Global Intensity (GCC)</span>
-            <input type="range" id="gccRange" min="0" max="255" value="180" oninput="updateGCC(this.value)">
+            <input type="range" id="gccRange" min="0" max="255" value="255" onchange="updateGCC(this.value)">
         </div>
 
         <div class="card">
-            <span class="label">Operational Modes</span>
+            <span class="label">Operational Modes (Offloaded to ESP32)</span>
             <div class="grid-2">
                 <button onclick="runMode('flame')">FLAME</button>
                 <button onclick="runMode('ocean')">OCEAN</button>
@@ -65,21 +55,11 @@
                 <button onclick="runMode('off')" style="color:#ff4444;">OFF</button>
             </div>
         </div>
-
-        <div class="card">
-            <span class="label">Scrolling Text Interface</span>
-            <input type="text" id="scrollText" class="text-input" maxlength="50" value="VIOLA ❤">
-            <button class="btn-primary" onclick="updateTextMode()">Update & Scroll Text</button>
-        </div>
     </div>
 
     <script>
-        const noise=(()=>{const p=new Uint8Array(512);for(let i=0;i<256;i++)p[i]=i;for(let i=255;i>0;i--){const r=Math.floor(Math.random()*(i+1));[p[i],p[r]]=[p[r],p[i]]}for(let i=0;i<256;i++)p[256+i]=p[i];const fade=t=>t*t*t*(t*(t*6-15)+10),lerp=(t,a,b)=>a+t*(b-a),grad=(hash,x,y,z)=>{const h=hash&15,u=h<8?x:y,v=h<4?y:h==12||h==14?x:z;return((h&1)==0?u:-u)+((h&2)==0?v:-v)};return(x,y,z)=>{const X=Math.floor(x)&255,Y=Math.floor(y)&255,Z=Math.floor(z)&255;x-=Math.floor(x);y-=Math.floor(y);z-=Math.floor(z);const u=fade(x),v=fade(y),w=fade(z),A=p[X]+Y,AA=p[A]+Z,AB=p[A+1]+Z,B=p[X+1]+Y,BA=p[B]+Z,BB=p[B+1]+Z;return lerp(w,lerp(v,lerp(u,grad(p[AA],x,y,z),grad(p[BA],x-1,y,z)),lerp(u,grad(p[AB],x,y-1,z),grad(p[BA+1],x-1,y-1,z))),lerp(v,lerp(u,grad(p[AA+1],x,y,z-1),grad(p[BA+1],x-1,y,z-1)),lerp(u,grad(p[AB+1],x,y-1,z-1),grad(p[BB+1],x-1,y-1,z-1))))}})();
-
-        const matrixEl = document.getElementById('matrix'), leds = [];
-        let gcc = 0.7, animTimer = null, time = 0, currentMsg = "VIOLA ❤";
-        let lastRGB = {r:255, g:255, b:255}; 
-
+        const matrixEl = document.getElementById('matrix');
+        const leds = [];
         for (let i = 0; i < 64; i++) {
             const led = document.createElement('div');
             led.className = 'led';
@@ -87,131 +67,67 @@
             leds.push(led);
         }
 
-        function draw(x, y, r, g, b) {
-            const idx = y * 8 + x;
-            if (leds[idx]) leds[idx].style.background = `rgb(${Math.floor(r*gcc)},${Math.floor(g*gcc)},${Math.floor(b*gcc)})`;
-        }
+        // --- BLE Communication ---
+        let bleDevice, bleServer, rxChar, txChar;
+        const SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase();
+        const RX_UUID = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase();
+        const TX_UUID = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase();
 
-        const canvas = document.getElementById('colorCanvas'), ctx = canvas.getContext('2d');
-        function drawPalette() {
-            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-            const cx = canvas.width/2, cy = canvas.height/2, rad = canvas.width/2;
-            for(let a=0; a<360; a++) {
-                ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,rad,(a-1)*Math.PI/180,(a+1)*Math.PI/180);
-                const g = ctx.createRadialGradient(cx,cy,0,cx,cy,rad);
-                g.addColorStop(0,'white'); g.addColorStop(1,`hsl(${a},100%,50%)`);
-                ctx.fillStyle = g; ctx.fill();
+        async function initBLE() {
+            try {
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ namePrefix: 'VIOLA' }],
+                    optionalServices: [SERVICE_UUID]
+                });
+                bleServer = await bleDevice.gatt.connect();
+                const service = await bleServer.getPrimaryService(SERVICE_UUID);
+                rxChar = await service.getCharacteristic(RX_UUID);
+                txChar = await service.getCharacteristic(TX_UUID);
+                
+                await txChar.startNotifications();
+                txChar.addEventListener('characteristicvaluechanged', handleNotify);
+                
+                const btn = document.getElementById('connectBtn');
+                btn.innerText = "Connected";
+                btn.style.background = "#28a745";
+            } catch (error) {
+                console.error(error);
+                alert("BLE Connection Failed: " + error);
             }
         }
-        window.addEventListener('load', drawPalette);
 
-        canvas.addEventListener('pointermove', e => {
-            if(e.buttons !== 1) return;
-            const r = canvas.getBoundingClientRect(), x = e.clientX-r.left, y = e.clientY-r.top;
-            const cx = r.width/2, cy = r.height/2, d = Math.sqrt((x-cx)**2+(y-cy)**2);
-            if(d <= r.width/2) {
-                const p = ctx.getImageData(x, y, 1, 1).data;
-                lastRGB = {r:p[0], g:p[1], b:p[2]};
-                document.getElementById('hex-display').innerText = "#" + ((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1).toUpperCase();
-                if(!animTimer || animTimer._mode !== 'text') setStatic();
+        function handleNotify(event) {
+            const value = event.target.value;
+            if (value.getUint8(0) === 0x10) {
+                const battAdc = value.getUint8(1); 
+                // Approximate UI percentage calculation based on ADC 8-bit shifted value
+                let pct = Math.round(((battAdc - 160) / (210 - 160)) * 100); 
+                pct = Math.max(0, Math.min(100, pct));
+                document.getElementById('battery-text').innerText = `BATTERY: ${pct}%`;
             }
-        });
-
-        function setStatic() {
-            stop();
-            for(let i=0; i<64; i++) draw(i%8, Math.floor(i/8), lastRGB.r, lastRGB.g, lastRGB.b);
         }
 
-        // --- EXTENDED 5-width Font (Rows 1-6) ---
-        const font = {
-            'A':[0x0E,0x11,0x11,0x1F,0x11,0x11],'B':[0x1E,0x11,0x1E,0x11,0x11,0x1E],'C':[0x0F,0x10,0x10,0x10,0x10,0x0F],
-            'D':[0x1E,0x11,0x11,0x11,0x11,0x1E],'E':[0x1F,0x10,0x1E,0x10,0x10,0x1F],'F':[0x1F,0x10,0x1E,0x10,0x10,0x10],
-            'G':[0x0F,0x10,0x17,0x11,0x11,0x0F],'H':[0x11,0x11,0x1F,0x11,0x11,0x11],'I':[0x0E,0x04,0x04,0x04,0x04,0x0E],
-            'J':[0x07,0x02,0x02,0x02,0x12,0x0C],'K':[0x11,0x12,0x1C,0x12,0x11,0x11],'L':[0x10,0x10,0x10,0x10,0x10,0x1F],
-            'M':[0x11,0x1B,0x15,0x11,0x11,0x11],'N':[0x11,0x19,0x15,0x13,0x11,0x11],'O':[0x0E,0x11,0x11,0x11,0x11,0x0E],
-            'P':[0x1E,0x11,0x1E,0x10,0x10,0x10],'Q':[0x0E,0x11,0x11,0x15,0x12,0x0D],'R':[0x1E,0x11,0x1E,0x14,0x12,0x11],
-            'S':[0x0F,0x10,0x0E,0x01,0x01,0x1E],'T':[0x1F,0x04,0x04,0x04,0x04,0x04],'U':[0x11,0x11,0x11,0x11,0x11,0x0E],
-            'V':[0x11,0x11,0x11,0x11,0x0A,0x04],'W':[0x11,0x11,0x11,0x15,0x1B,0x11],'X':[0x11,0x11,0x0A,0x04,0x0A,0x11],
-            'Y':[0x11,0x11,0x0A,0x04,0x04,0x04],'Z':[0x1F,0x02,0x04,0x08,0x10,0x1F],' ':[0,0,0,0,0,0],
-            '❤':[0x0A,0x1F,0x1F,0x0E,0x04,0x00], '★':[0x04,0x0E,0x1F,0x0E,0x15,0x00], '☺':[0x0E,0x15,0x11,0x11,0x0E,0x00]
-        };
+        async function sendCmd(cmdArray) {
+            if (!rxChar) return;
+            try { await rxChar.writeValue(new Uint8Array(cmdArray)); } 
+            catch(e) { console.error(e); }
+        }
 
-        function updateTextMode() {
-            let raw = document.getElementById('scrollText').value;
-            // Map common emoji variations to internal codes
-            currentMsg = raw.replace(/❤️|❤/g, "❤").replace(/⭐|★/g, "★").replace(/😊|☺/g, "☺").toUpperCase();
-            runMode('text');
+        function updateGCC(val) {
+            sendCmd([0x03, parseInt(val)]); // Command 0x03: Set GCC
         }
 
         function runMode(mode) {
-            stop();
-            if (mode === 'off') { leds.forEach(l => l.style.background = '#080808'); return; }
-            animTimer = setInterval(() => {
-                time += 0.03;
-                for(let y=0; y<8; y++) {
-                    for(let x=0; x<8; x++) {
-                        if (mode === 'flame') {
-                            let n = noise(x*0.45, y*0.2+time*3.5, time*0.4);
-                            let h = (n*0.5+0.5)*255*(1.2-y/6.5);
-                            draw(x, y, h, Math.pow(h,2.2)/255**1.2, Math.pow(h,3.5)/255**2.5);
-                        } else if (mode === 'ocean') {
-                            let w = noise(x*0.35-time, y*0.25, time*0.15);
-                            let amp = Math.sin(x*0.6+time*2.8+w*4.5);
-                            let b = (amp*0.5+0.5)*180+75, f = Math.max(0, (amp-0.35)/0.65);
-                            draw(x, y, b*f, b*0.4+b*0.6*f, b);
-                        } else if (mode === 'pastel') {
-                            let r = (noise(x*0.07, y*0.07, time*0.25)*0.5+0.5)*255;
-                            let g = (noise(x*0.07, y*0.07, time*0.25+15)*0.5+0.5)*255;
-                            let b = (noise(x*0.07, y*0.07, time*0.25+30)*0.5+0.5)*255;
-                            draw(x, y, r, g, b);
-                        } else if (mode === 'flower') {
-                            let d = Math.sqrt((x-3.5)**2 + (y-3.5)**2);
-                            let wave = Math.sin(d - time*7) * 0.5 + 0.5;
-                            let hue = (time * 60 + d * 15) % 360;
-                            let [r,g,b] = hsvToRgb(hue, 1, wave * 0.8 + 0.2);
-                            draw(x, y, r, g, b);
-                        } else if (mode === 'aurora') {
-                            let n = noise(x*0.12+time, y*0.04, time*0.08);
-                            let lum = Math.pow(Math.sin(x*0.35+n*5.5)*0.5+0.5, 2.5);
-                            let hue = (110 + y * 20 + Math.sin(time)*50) % 360; 
-                            draw(x, y, ...hsvToRgb(hue, 0.9, lum));
-                        } else if (mode === 'text') {
-                            const speed = 12, step = 6;
-                            // Add 2 spaces at the end of message for the loop gap
-                            let msgArr = Array.from(currentMsg).concat([' ', ' ']);
-                            let totalX = x + Math.floor(time * speed);
-                            let charIdx = Math.floor(totalX / step) % msgArr.length;
-                            let localX = totalX % step;
-                            if (y === 0 || y === 7) {
-                                draw(x, y, 10, 10, 10);
-                            } else {
-                                let pixel = 0;
-                                if (localX < 5) {
-                                    let charData = font[msgArr[charIdx]] || font[' '];
-                                    pixel = (charData[y - 1] >> (4 - localX)) & 1;
-                                }
-                                if (pixel) draw(x, y, lastRGB.r, lastRGB.g, lastRGB.b);
-                                else draw(x, y, 20, 20, 20);
-                            }
-                        }
-                    }
-                }
-            }, 30);
-            animTimer._mode = mode;
-        }
-
-        function hsvToRgb(h, s, v) {
-            let r, g, b, i = Math.floor(h / 60), f = h / 60 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
-            switch (i % 6) {
-                case 0: r = v, g = t, b = p; break; case 1: r = q, g = v, b = p; break; case 2: r = p, g = v, b = t; break;
-                case 3: r = p, g = q, b = v; break; case 4: r = t, g = p, b = v; break; case 5: r = v, g = p, b = q; break;
+            // Mapping modes to IDs for firmware offloading
+            const modeMap = {'off': 0, 'flame': 1, 'ocean': 2, 'pastel': 3, 'flower': 4, 'aurora': 5};
+            if (modeMap[mode] !== undefined) {
+                sendCmd([0x04, modeMap[mode]]); // Command 0x04: Change Animation Mode
+                
+                // UI Preview mock (Solid color indication)
+                const colorMap = {'off':'#080808','flame':'#ff3300','ocean':'#0066ff','pastel':'#ff99cc','flower':'#ff00ff','aurora':'#00ff99'};
+                leds.forEach(l => l.style.background = colorMap[mode]);
             }
-            return [r * 255, g * 255, b * 255];
         }
-
-        function updateGCC(v) { gcc = v / 255; if(!animTimer || animTimer._mode === 'off') setStatic(); }
-        function stop() { if(animTimer) clearInterval(animTimer); animTimer = null; }
-        function initBLE() { alert("BLE Initialization..."); }
     </script>
 </body>
 </html>
