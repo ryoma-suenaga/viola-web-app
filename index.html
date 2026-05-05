@@ -1,133 +1,697 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIOLA | ams OSRAM Controller</title>
-    <style>
-        :root { --accent: #ff5e00; --bg: #050505; --card: #141414; --text: #ffffff; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 50px; }
-        .header { width: 100%; padding: 30px 0; text-align: center; background: linear-gradient(180deg, #111 0%, transparent 100%); }
-        h1 { margin: 0; font-size: 0.8rem; letter-spacing: 5px; font-weight: 300; color: #777; text-transform: uppercase; }
-        #matrix-shell { background: #000; padding: 15px; border-radius: 20px; border: 1px solid #222; box-shadow: 0 10px 40px rgba(0,0,0,1); margin: 15px 0; }
-        #matrix { display: grid; grid-template-columns: repeat(8, 32px); gap: 6px; }
-        .led { width: 32px; height: 32px; background: #111; border-radius: 4px; position: relative; }
-        .led::after { content: ''; position: absolute; inset: 0; border-radius: 4px; filter: blur(5px); opacity: 0.8; background: inherit; }
-        .container { width: 92%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
-        .card { background: var(--card); border-radius: 16px; padding: 18px; border: 1px solid #222; }
-        .label { font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: block; font-weight: bold; }
-        button { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-primary { background: var(--accent); color: #fff; border: none; font-weight: bold; width: 100%; box-shadow: 0 4px 12px rgba(255,94,0,0.2); }
-        .text-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--text); border-radius: 8px; font-family: monospace; margin-bottom: 10px; box-sizing: border-box; font-size: 1rem; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        input[type="range"] { width: 100%; accent-color: var(--accent); margin: 8px 0; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIOLA | ams OSRAM BLE Controller</title>
+  <style>
+    :root {
+      --accent: #ff5e00;
+      --accent-dim: #cc4a00;
+      --bg: #050505;
+      --card: #141414;
+      --text: #fff;
+      --good: #00d96b;
+      --warn: #ffb000;
+      --danger: #ff3b30;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      font-family: 'Inter', 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 50px
+    }
+
+    .header {
+      width: 100%;
+      padding: 25px 0 15px;
+      text-align: center;
+      background: linear-gradient(180deg, #111 0%, transparent 100%)
+    }
+
+    .brand {
+      font-size: 1.5rem;
+      letter-spacing: 6px;
+      font-weight: 200;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(255, 94, 0, .4)
+    }
+
+    h1 {
+      margin: 4px 0 0;
+      font-size: .7rem;
+      letter-spacing: 4px;
+      font-weight: 300;
+      color: #666;
+      text-transform: uppercase
+    }
+
+    /* --- Status / Connection bar --- */
+    .status-bar {
+      width: 92%;
+      max-width: 400px;
+      margin: 8px 0 12px;
+      padding: 12px;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid #222;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .78rem
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #444;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, .04)
+    }
+
+    .dot.connected {
+      background: var(--good);
+      box-shadow: 0 0 8px var(--good)
+    }
+
+    .dot.connecting {
+      background: var(--warn);
+      animation: pulse 1s infinite
+    }
+
+    .dot.error {
+      background: var(--danger)
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .3
+      }
+    }
+
+    .status-text {
+      flex: 1;
+      color: #aaa
+    }
+
+    .batt {
+      font-family: monospace;
+      color: var(--warn);
+      font-size: .75rem
+    }
+
+    #matrix-shell {
+      background: #000;
+      padding: 15px;
+      border-radius: 20px;
+      border: 1px solid #222;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 1);
+      margin: 8px 0 15px;
+      position: relative
+    }
+
+    #matrix {
+      display: grid;
+      grid-template-columns: repeat(8, 30px);
+      gap: 5px
+    }
+
+    .led {
+      width: 30px;
+      height: 30px;
+      background: #0a0a0a;
+      border-radius: 4px;
+      position: relative;
+      transition: background 60ms linear
+    }
+
+    .preview-tag {
+      position: absolute;
+      top: -9px;
+      right: 10px;
+      background: #000;
+      padding: 1px 8px;
+      font-size: .55rem;
+      letter-spacing: 2px;
+      color: #555;
+      border: 1px solid #222;
+      border-radius: 4px
+    }
+
+    .container {
+      width: 92%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid #222
+    }
+
+    .label {
+      font-size: .65rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600
+    }
+
+    .label .value {
+      color: var(--accent);
+      font-family: monospace
+    }
+
+    button {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      color: #eee;
+      padding: 11px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: .15s;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: inherit
+    }
+
+    button:hover:not(:disabled) {
+      border-color: #444
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(.97)
+    }
+
+    button:disabled {
+      opacity: .35;
+      cursor: not-allowed
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-weight: 700;
+      width: 100%;
+      box-shadow: 0 4px 14px rgba(255, 94, 0, .25)
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #ff7a30
+    }
+
+    .btn-danger {
+      color: #ff7766;
+      border-color: #3a1a1a
+    }
+
+    .btn-secondary {
+      background: #0a0a0a
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 11px;
+      background: #000;
+      border: 1px solid #2a2a2a;
+      color: var(--accent);
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: .85rem;
+      margin-bottom: 10px
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: var(--accent)
+    }
+
+    #colorWheel {
+      width: 100%;
+      height: 160px;
+      border-radius: 12px;
+      cursor: crosshair;
+      touch-action: none;
+      background: #000;
+      display: block
+    }
+
+    .color-readout {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-family: monospace;
+      font-size: .7rem;
+      color: #888
+    }
+
+    .swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid #333
+    }
+
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--accent);
+      margin: 4px 0
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px
+    }
+
+    .log {
+      background: #000;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: .65rem;
+      color: #666;
+      max-height: 80px;
+      overflow-y: auto;
+      line-height: 1.4
+    }
+
+    .log .err {
+      color: #ff6b6b
+    }
+
+    .log .ok {
+      color: #5dd07a
+    }
+
+    .log .tx {
+      color: var(--accent)
+    }
+  </style>
 </head>
+
 <body>
-    <div class="header">
-        <h1>VIOLA MATRIX CONTROLLER</h1>
+
+  <div class="header">
+    <div class="brand">VIOLA</div>
+    <h1>ams OSRAM Matrix Controller — BLE</h1>
+  </div>
+
+  <!-- 接続状態 -->
+  <div class="status-bar">
+    <div id="statusDot" class="dot"></div>
+    <div id="statusText" class="status-text">未接続 — タップで接続</div>
+    <div id="battReadout" class="batt">— V</div>
+  </div>
+
+  <!-- マトリクスプレビュー -->
+  <div id="matrix-shell">
+    <span class="preview-tag">PREVIEW 8×8</span>
+    <div id="matrix"></div>
+  </div>
+
+  <div class="container">
+
+    <!-- 接続カード -->
+    <div class="card">
+      <div class="label"><span>Connection</span><span id="rssi" class="value">—</span></div>
+      <div class="grid-2">
+        <button id="connectBtn" class="btn-primary" onclick="connect()">CONNECT</button>
+        <button id="disconnectBtn" class="btn-danger" onclick="disconnect()" disabled>DISCONNECT</button>
+      </div>
     </div>
 
-    <div id="matrix-shell"><div id="matrix"></div></div>
-
-    <div class="container">
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span class="label" style="margin:0;">Hardware Status</span>
-                <span id="battery-text" style="font-family:monospace; color:var(--accent); font-weight:bold; font-size:0.8rem;">BATTERY: --%</span>
-            </div>
-            <button id="connectBtn" class="btn-primary" onclick="initBLE()" style="margin-top:10px;">Connect Device</button>
-        </div>
-
-        <div class="card">
-            <span class="label">Global Intensity (GCC)</span>
-            <input type="range" id="gccRange" min="0" max="255" value="255" onchange="updateGCC(this.value)">
-        </div>
-
-        <div class="card">
-            <span class="label">Operational Modes (Offloaded to ESP32)</span>
-            <div class="grid-2">
-                <button onclick="runMode('flame')">FLAME</button>
-                <button onclick="runMode('ocean')">OCEAN</button>
-                <button onclick="runMode('pastel')">PASTEL</button>
-                <button onclick="runMode('flower')">FLOWER</button>
-                <button onclick="runMode('aurora')">AURORA</button>
-                <button onclick="runMode('off')" style="color:#ff4444;">OFF</button>
-            </div>
-        </div>
+    <!-- カラーホイール -->
+    <div class="card">
+      <div class="label"><span>Solid Color (全面塗り)</span><span id="colorHex" class="value">#FF5E00</span></div>
+      <canvas id="colorWheel"></canvas>
+      <div class="color-readout">
+        <span id="rgbText">R:255 G:94 B:0</span>
+        <div id="swatch" class="swatch" style="background:#ff5e00"></div>
+      </div>
     </div>
 
-    <script>
-        const matrixEl = document.getElementById('matrix');
-        const leds = [];
-        for (let i = 0; i < 64; i++) {
-            const led = document.createElement('div');
-            led.className = 'led';
-            matrixEl.appendChild(led);
-            leds.push(led);
-        }
+    <!-- 輝度（GCC） -->
+    <div class="card">
+      <div class="label"><span>Global Brightness (GCC)</span><span id="gccVal" class="value">0x20 / 64</span></div>
+      <input type="range" id="gccRange" min="0" max="64" value="32" oninput="onGccChange(this.value)">
+      <div style="font-size:.6rem;color:#555;text-align:right">IS31FL3729: A1h, 7-bit (0–0x40)</div>
+    </div>
 
-        // --- BLE Communication ---
-        let bleDevice, bleServer, rxChar, txChar;
-        const SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase();
-        const RX_UUID = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase();
-        const TX_UUID = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase();
+    <!-- スクロールテキスト -->
+    <div class="card">
+      <div class="label"><span>Scrolling Text</span><span class="value">UTF-8 / 50 chars</span></div>
+      <input type="text" id="scrollText" class="text-input" maxlength="50" placeholder="メッセージを入力...">
+      <button class="btn-primary" onclick="sendText()">SEND TEXT (cmd 0x06)</button>
+    </div>
 
-        async function initBLE() {
-            try {
-                bleDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ namePrefix: 'VIOLA' }],
-                    optionalServices: [SERVICE_UUID]
-                });
-                bleServer = await bleDevice.gatt.connect();
-                const service = await bleServer.getPrimaryService(SERVICE_UUID);
-                rxChar = await service.getCharacteristic(RX_UUID);
-                txChar = await service.getCharacteristic(TX_UUID);
-                
-                await txChar.startNotifications();
-                txChar.addEventListener('characteristicvaluechanged', handleNotify);
-                
-                const btn = document.getElementById('connectBtn');
-                btn.innerText = "Connected";
-                btn.style.background = "#28a745";
-            } catch (error) {
-                console.error(error);
-                alert("BLE Connection Failed: " + error);
-            }
-        }
+    <!-- 内蔵アニメ -->
+    <div class="card">
+      <div class="label"><span>Built-in Effects (FW-side)</span><span class="value">cmd 0x05</span></div>
+      <div class="grid-3">
+        <button onclick="setMode(1)">FLAME</button>
+        <button onclick="setMode(2)">OCEAN</button>
+        <button onclick="setMode(3)">PASTEL</button>
+        <button onclick="setMode(4)">FLOWER</button>
+        <button onclick="setMode(5)">AURORA</button>
+        <button class="btn-secondary" onclick="setMode(0)">STATIC</button>
+      </div>
+    </div>
 
-        function handleNotify(event) {
-            const value = event.target.value;
-            if (value.getUint8(0) === 0x10) {
-                const battAdc = value.getUint8(1); 
-                // Approximate UI percentage calculation based on ADC 8-bit shifted value
-                let pct = Math.round(((battAdc - 160) / (210 - 160)) * 100); 
-                pct = Math.max(0, Math.min(100, pct));
-                document.getElementById('battery-text').innerText = `BATTERY: ${pct}%`;
-            }
-        }
+    <!-- ユーティリティ -->
+    <div class="card">
+      <div class="label"><span>Utilities</span></div>
+      <div class="grid-2">
+        <button onclick="clearAll()">CLEAR (cmd 0x02)</button>
+        <button class="btn-danger" onclick="setMode(255)">OFF</button>
+      </div>
+    </div>
 
-        async function sendCmd(cmdArray) {
-            if (!rxChar) return;
-            try { await rxChar.writeValue(new Uint8Array(cmdArray)); } 
-            catch(e) { console.error(e); }
-        }
+    <!-- ログ -->
+    <div class="card">
+      <div class="label"><span>Debug Log</span>
+        <span class="value" style="cursor:pointer" onclick="document.getElementById('log').innerHTML=''">[clear]</span>
+      </div>
+      <div id="log" class="log">起動中...</div>
+    </div>
 
-        function updateGCC(val) {
-            sendCmd([0x03, parseInt(val)]); // Command 0x03: Set GCC
-        }
+  </div>
 
-        function runMode(mode) {
-            // Mapping modes to IDs for firmware offloading
-            const modeMap = {'off': 0, 'flame': 1, 'ocean': 2, 'pastel': 3, 'flower': 4, 'aurora': 5};
-            if (modeMap[mode] !== undefined) {
-                sendCmd([0x04, modeMap[mode]]); // Command 0x04: Change Animation Mode
-                
-                // UI Preview mock (Solid color indication)
-                const colorMap = {'off':'#080808','flame':'#ff3300','ocean':'#0066ff','pastel':'#ff99cc','flower':'#ff00ff','aurora':'#00ff99'};
-                leds.forEach(l => l.style.background = colorMap[mode]);
-            }
+  <script>
+    /* ==========================================================================
+       VIOLA BLE Controller — for Viola Matrix Display Driver Rev.2.1
+       --------------------------------------------------------------------------
+       Hardware:
+         - ESP32-WROOM-32E
+         - IS31FL3729 × 2 (Chip A: 0x34 R+G,  Chip B: 0x37 B)  ← AD=VCC でB側
+         - 8x8 RGB Common-Anode matrix via 40-pin FPC
+    
+       BLE Service (Nordic UART-like, per Spec Rev.4.1 §8.1):
+         SERVICE  : 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
+         RX (W)   : 6E400002-B5A3-F393-E0A9-E50E24DCCA9E   ← App → ESP32
+         TX (N)   : 6E400003-B5A3-F393-E0A9-E50E24DCCA9E   ← ESP32 → App (battery)
+    
+       Command Protocol (App → ESP32, written to RX char):
+         [0x01][x][y][R][G][B]      Per-pixel update (6B)
+         [0x02]                     Clear all  (1B)
+         [0x03][gcc]                Set GCC 0..0x40 (2B)
+         [0x04][R][G][B]            Solid fill  (4B)
+         [0x05][mode]               Built-in effect (mode 0..5, 255=OFF)
+         [0x06][len][utf8 bytes...] Scroll text (2+N B, len ≤ 50)
+    
+       Notification format (ESP32 → App, from TX char):
+         [0xB0][volt_hi][volt_lo]   Battery in millivolts (big-endian, every 5s)
+       ========================================================================== */
+
+    const UART_SVC = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+    const UART_RX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+    const UART_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+    let device = null, server = null, rxChar = null, txChar = null;
+    let connected = false;
+    let currentColor = { r: 255, g: 94, b: 0 };
+    let gcc = 32; // 0..64
+
+    const $ = id => document.getElementById(id);
+
+    // ---------- Logging ----------
+    function log(msg, kind = '') {
+      const el = $('log');
+      const t = new Date().toLocaleTimeString();
+      const cls = kind ? ` class="${kind}"` : '';
+      el.innerHTML += `<div${cls}>[${t}] ${msg}</div>`;
+      el.scrollTop = el.scrollHeight;
+    }
+
+    // ---------- Status UI ----------
+    function setStatus(state, text) {
+      const dot = $('statusDot'), st = $('statusText');
+      dot.className = 'dot ' + state;
+      st.textContent = text;
+      $('connectBtn').disabled = (state === 'connecting' || state === 'connected');
+      $('disconnectBtn').disabled = (state !== 'connected');
+    }
+
+    // ---------- 8x8 LED preview grid ----------
+    const matrixEl = $('matrix'), leds = [];
+    for (let i = 0; i < 64; i++) {
+      const led = document.createElement('div');
+      led.className = 'led';
+      matrixEl.appendChild(led);
+      leds.push(led);
+    }
+    function previewSet(x, y, r, g, b) {
+      const i = y * 8 + x;
+      if (leds[i]) {
+        const k = gcc / 64;
+        leds[i].style.background = `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(b * k)})`;
+      }
+    }
+    function previewFill(r, g, b) {
+      for (let y = 0; y < 8; y++)for (let x = 0; x < 8; x++)previewSet(x, y, r, g, b);
+    }
+    function previewClear() {
+      leds.forEach(l => l.style.background = '#0a0a0a');
+    }
+
+    // ---------- BLE: Connect ----------
+    async function connect() {
+      if (!navigator.bluetooth) {
+        log('Web Bluetooth未対応のブラウザです（Chrome/Edge推奨）', 'err');
+        setStatus('error', 'Web Bluetooth未対応');
+        return;
+      }
+      try {
+        setStatus('connecting', 'スキャン中...');
+        log('navigator.bluetooth.requestDevice() ...');
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ namePrefix: 'VIOLA' }, { services: [UART_SVC] }],
+          optionalServices: [UART_SVC]
+        });
+        log(`Device: ${device.name || '(unnamed)'}`);
+        device.addEventListener('gattserverdisconnected', onDisconnected);
+
+        setStatus('connecting', 'GATT接続中...');
+        server = await device.gatt.connect();
+        const svc = await server.getPrimaryService(UART_SVC);
+        rxChar = await svc.getCharacteristic(UART_RX);
+        txChar = await svc.getCharacteristic(UART_TX);
+
+        await txChar.startNotifications();
+        txChar.addEventListener('characteristicvaluechanged', onNotify);
+
+        connected = true;
+        setStatus('connected', '接続済み — VIOLA Rev.2.1');
+        log('接続完了。Notification購読開始', 'ok');
+
+        // 初期同期: 現在のGCCを送る
+        await sendGcc(gcc);
+      } catch (e) {
+        log(`接続失敗: ${e.message}`, 'err');
+        setStatus('error', '接続失敗');
+      }
+    }
+
+    async function disconnect() {
+      if (device && device.gatt.connected) {
+        device.gatt.disconnect();
+      }
+    }
+    function onDisconnected() {
+      connected = false; rxChar = null; txChar = null;
+      setStatus('', '切断されました');
+      $('battReadout').textContent = '— V';
+      log('Disconnected', 'err');
+    }
+
+    // ---------- BLE: Notification (battery) ----------
+    function onNotify(ev) {
+      const v = ev.target.value; // DataView
+      if (v.byteLength < 3) return;
+      const tag = v.getUint8(0);
+      if (tag === 0xB0) {
+        const mv = v.getUint16(1, false); // big-endian
+        const volts = (mv / 1000).toFixed(2);
+        $('battReadout').textContent = `${volts} V`;
+        // 低電圧警告
+        if (mv < 3400) {
+          $('battReadout').style.color = 'var(--danger)';
+        } else if (mv < 3700) {
+          $('battReadout').style.color = 'var(--warn)';
+        } else {
+          $('battReadout').style.color = 'var(--good)';
         }
-    </script>
+      }
+    }
+
+    // ---------- BLE: Send wrapper ----------
+    async function sendCmd(bytes) {
+      if (!connected || !rxChar) {
+        log('未接続のため送信できません', 'err');
+        return false;
+      }
+      try {
+        await rxChar.writeValueWithoutResponse(new Uint8Array(bytes));
+        const hex = bytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
+        log(`TX: ${hex}`, 'tx');
+        return true;
+      } catch (e) {
+        log(`送信エラー: ${e.message}`, 'err');
+        return false;
+      }
+    }
+
+    // ---------- Commands ----------
+    async function sendPixel(x, y, r, g, b) {
+      previewSet(x, y, r, g, b);
+      await sendCmd([0x01, x & 7, y & 7, r & 0xff, g & 0xff, b & 0xff]);
+    }
+    async function clearAll() {
+      previewClear();
+      await sendCmd([0x02]);
+    }
+    async function sendGcc(g) {
+      await sendCmd([0x03, g & 0x7F]);
+    }
+    async function sendSolid(r, g, b) {
+      previewFill(r, g, b);
+      await sendCmd([0x04, r & 0xff, g & 0xff, b & 0xff]);
+    }
+    async function setMode(modeId) {
+      await sendCmd([0x05, modeId & 0xff]);
+      if (modeId === 0 || modeId === 255) previewClear();
+      else {
+        // ローカルプレビューで雰囲気だけ表示（実描画はESP32側）
+        previewModeHint(modeId);
+      }
+    }
+    async function sendText() {
+      const txt = $('scrollText').value;
+      if (!txt) { log('テキストが空です', 'err'); return }
+      const enc = new TextEncoder();
+      const utf8 = enc.encode(txt);
+      if (utf8.length > 50) { log('UTF-8長が50バイトを超過', 'err'); return }
+      await sendCmd([0x06, utf8.length, ...utf8]);
+    }
+
+    // ---------- GCC slider ----------
+    function onGccChange(v) {
+      gcc = parseInt(v, 10);
+      $('gccVal').textContent = `0x${gcc.toString(16).padStart(2, '0').toUpperCase()} / ${gcc}`;
+      if (connected) sendGcc(gcc);
+      // プレビューに即反映
+      for (let y = 0; y < 8; y++)for (let x = 0; x < 8; x++) {
+        const cur = leds[y * 8 + x].style.background;
+        if (cur && cur !== 'rgb(10, 10, 10)') {/* ignore — gcc is preview-side multiplier next time */ }
+      }
+    }
+
+    // ---------- Color Wheel ----------
+    const wheel = $('colorWheel');
+    function drawWheel() {
+      const dpr = window.devicePixelRatio || 1;
+      const w = wheel.clientWidth, h = wheel.clientHeight;
+      wheel.width = w * dpr; wheel.height = h * dpr;
+      const ctx = wheel.getContext('2d');
+      ctx.scale(dpr, dpr);
+      // HSV color band (horizontal hue, vertical lightness)
+      for (let x = 0; x < w; x++) {
+        const hue = (x / w) * 360;
+        const grd = ctx.createLinearGradient(0, 0, 0, h);
+        grd.addColorStop(0, `hsl(${hue},100%,90%)`);
+        grd.addColorStop(0.5, `hsl(${hue},100%,50%)`);
+        grd.addColorStop(1, `hsl(${hue},100%,10%)`);
+        ctx.fillStyle = grd;
+        ctx.fillRect(x, 0, 1, h);
+      }
+    }
+    function pickColor(ev) {
+      const rect = wheel.getBoundingClientRect();
+      const cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
+      const cy = (ev.touches ? ev.touches[0].clientY : ev.clientY) - rect.top;
+      const ctx = wheel.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const px = ctx.getImageData(cx * dpr, cy * dpr, 1, 1).data;
+      currentColor = { r: px[0], g: px[1], b: px[2] };
+      updateColorUI();
+      if (connected) sendSolid(px[0], px[1], px[2]);
+      else previewFill(px[0], px[1], px[2]);
+    }
+    function updateColorUI() {
+      const { r, g, b } = currentColor;
+      const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+      $('colorHex').textContent = hex;
+      $('rgbText').textContent = `R:${r} G:${g} B:${b}`;
+      $('swatch').style.background = hex;
+    }
+    wheel.addEventListener('pointerdown', e => { wheel.setPointerCapture(e.pointerId); pickColor(e) });
+    wheel.addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'touch') pickColor(e) });
+
+    // ---------- Local effect preview hint (mode start) ----------
+    function previewModeHint(modeId) {
+      // 内蔵モードの「予告」として簡易グラデーションを1枚だけ描画
+      const palettes = {
+        1: [[255, 40, 0], [255, 180, 0], [255, 255, 150]],   // FLAME
+        2: [[0, 40, 120], [0, 150, 200], [180, 230, 255]],   // OCEAN
+        3: [[255, 180, 220], [200, 255, 200], [255, 230, 150]], // PASTEL
+        4: [[255, 80, 180], [180, 80, 255], [80, 180, 255]], // FLOWER
+        5: [[80, 255, 150], [80, 180, 255], [200, 80, 255]]  // AURORA
+      };
+      const pal = palettes[modeId];
+      if (!pal) return;
+      for (let y = 0; y < 8; y++) {
+        const t = y / 7, idx = Math.min(pal.length - 1, Math.floor(t * pal.length));
+        const [r, g, b] = pal[idx];
+        for (let x = 0; x < 8; x++)previewSet(x, y, r, g, b);
+      }
+    }
+
+    // ---------- Init ----------
+    window.addEventListener('load', () => {
+      drawWheel();
+      setStatus('', '未接続 — タップで接続');
+      log('VIOLA BLE Controller v2.0 ready', 'ok');
+      log(`Service: ${UART_SVC.slice(0, 8)}...`);
+      if (!navigator.bluetooth) {
+        log('警告: このブラウザはWeb Bluetooth非対応', 'err');
+      }
+    });
+    window.addEventListener('resize', drawWheel);
+  </script>
 </body>
+
 </html>
