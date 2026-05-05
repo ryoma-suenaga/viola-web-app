@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -22,7 +22,7 @@
     }
 
     body {
-      font-family: 'Inter', 'Hiragino Sans', 'Meiryo', sans-serif;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
       background: var(--bg);
       color: var(--text);
       margin: 0;
@@ -35,21 +35,21 @@
 
     .header {
       width: 100%;
-      padding: 25px 0 15px;
+      padding: 30px 0 18px;
       text-align: center;
       background: linear-gradient(180deg, #111 0%, transparent 100%)
     }
 
     .brand {
-      font-size: 1.5rem;
-      letter-spacing: 6px;
+      font-size: 1.6rem;
+      letter-spacing: 7px;
       font-weight: 200;
       color: var(--accent);
       text-shadow: 0 0 20px rgba(255, 94, 0, .4)
     }
 
     h1 {
-      margin: 4px 0 0;
+      margin: 6px 0 0;
       font-size: .7rem;
       letter-spacing: 4px;
       font-weight: 300;
@@ -62,7 +62,7 @@
       width: 92%;
       max-width: 400px;
       margin: 8px 0 12px;
-      padding: 12px;
+      padding: 14px;
       background: var(--card);
       border-radius: 12px;
       border: 1px solid #222;
@@ -114,46 +114,10 @@
 
     .batt {
       font-family: monospace;
-      color: var(--warn);
-      font-size: .75rem
-    }
-
-    #matrix-shell {
-      background: #000;
-      padding: 15px;
-      border-radius: 20px;
-      border: 1px solid #222;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 1);
-      margin: 8px 0 15px;
-      position: relative
-    }
-
-    #matrix {
-      display: grid;
-      grid-template-columns: repeat(8, 30px);
-      gap: 5px
-    }
-
-    .led {
-      width: 30px;
-      height: 30px;
-      background: #0a0a0a;
-      border-radius: 4px;
-      position: relative;
-      transition: background 60ms linear
-    }
-
-    .preview-tag {
-      position: absolute;
-      top: -9px;
-      right: 10px;
-      background: #000;
-      padding: 1px 8px;
-      font-size: .55rem;
-      letter-spacing: 2px;
-      color: #555;
-      border: 1px solid #222;
-      border-radius: 4px
+      color: #888;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .5px
     }
 
     .container {
@@ -161,7 +125,8 @@
       max-width: 400px;
       display: flex;
       flex-direction: column;
-      gap: 12px
+      gap: 12px;
+      margin-top: 6px
     }
 
     .card {
@@ -184,7 +149,9 @@
 
     .label .value {
       color: var(--accent);
-      font-family: monospace
+      font-family: monospace;
+      text-transform: none;
+      letter-spacing: .5px
     }
 
     button {
@@ -266,17 +233,19 @@
     .color-readout {
       display: flex;
       justify-content: space-between;
-      margin-top: 8px;
+      align-items: center;
+      margin-top: 10px;
       font-family: monospace;
-      font-size: .7rem;
+      font-size: .72rem;
       color: #888
     }
 
     .swatch {
-      width: 24px;
-      height: 24px;
-      border-radius: 4px;
-      border: 1px solid #333
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      box-shadow: 0 0 12px rgba(0, 0, 0, .6)
     }
 
     input[type=range] {
@@ -305,7 +274,7 @@
       font-family: monospace;
       font-size: .65rem;
       color: #666;
-      max-height: 80px;
+      max-height: 90px;
       overflow-y: auto;
       line-height: 1.4
     }
@@ -321,6 +290,10 @@
     .log .tx {
       color: var(--accent)
     }
+
+    .log .rx {
+      color: #5db8ff
+    }
   </style>
 </head>
 
@@ -331,57 +304,45 @@
     <h1>ams OSRAM Matrix Controller — BLE</h1>
   </div>
 
-  <!-- 接続状態 -->
   <div class="status-bar">
     <div id="statusDot" class="dot"></div>
-    <div id="statusText" class="status-text">未接続 — タップで接続</div>
+    <div id="statusText" class="status-text">Disconnected — tap to connect</div>
     <div id="battReadout" class="batt">— V</div>
-  </div>
-
-  <!-- マトリクスプレビュー -->
-  <div id="matrix-shell">
-    <span class="preview-tag">PREVIEW 8×8</span>
-    <div id="matrix"></div>
   </div>
 
   <div class="container">
 
-    <!-- 接続カード -->
     <div class="card">
-      <div class="label"><span>Connection</span><span id="rssi" class="value">—</span></div>
+      <div class="label"><span>Connection</span><span id="devName" class="value">—</span></div>
       <div class="grid-2">
         <button id="connectBtn" class="btn-primary" onclick="connect()">CONNECT</button>
         <button id="disconnectBtn" class="btn-danger" onclick="disconnect()" disabled>DISCONNECT</button>
       </div>
     </div>
 
-    <!-- カラーホイール -->
     <div class="card">
-      <div class="label"><span>Solid Color (全面塗り)</span><span id="colorHex" class="value">#FF5E00</span></div>
+      <div class="label"><span>Solid Color (Whole Panel)</span><span id="colorHex" class="value">#FF5E00</span></div>
       <canvas id="colorWheel"></canvas>
       <div class="color-readout">
-        <span id="rgbText">R:255 G:94 B:0</span>
+        <span id="rgbText">R: 255 G: 94 B: 0</span>
         <div id="swatch" class="swatch" style="background:#ff5e00"></div>
       </div>
     </div>
 
-    <!-- 輝度（GCC） -->
     <div class="card">
-      <div class="label"><span>Global Brightness (GCC)</span><span id="gccVal" class="value">0x20 / 64</span></div>
+      <div class="label"><span>Global Brightness (GCC)</span><span id="gccVal" class="value">0x20 (32/64)</span></div>
       <input type="range" id="gccRange" min="0" max="64" value="32" oninput="onGccChange(this.value)">
-      <div style="font-size:.6rem;color:#555;text-align:right">IS31FL3729: A1h, 7-bit (0–0x40)</div>
+      <div style="font-size:.6rem;color:#555;text-align:right">IS31FL3729 register A1h, 7-bit (0–0x40)</div>
     </div>
 
-    <!-- スクロールテキスト -->
     <div class="card">
-      <div class="label"><span>Scrolling Text</span><span class="value">UTF-8 / 50 chars</span></div>
-      <input type="text" id="scrollText" class="text-input" maxlength="50" placeholder="メッセージを入力...">
-      <button class="btn-primary" onclick="sendText()">SEND TEXT (cmd 0x06)</button>
+      <div class="label"><span>Scrolling Text</span><span class="value">ASCII, 50 chars</span></div>
+      <input type="text" id="scrollText" class="text-input" maxlength="50" placeholder="Enter message...">
+      <button class="btn-primary" onclick="sendText()">SEND TEXT</button>
     </div>
 
-    <!-- 内蔵アニメ -->
     <div class="card">
-      <div class="label"><span>Built-in Effects (FW-side)</span><span class="value">cmd 0x05</span></div>
+      <div class="label"><span>Built-in Effects (FW-side)</span><span class="value">Perlin noise</span></div>
       <div class="grid-3">
         <button onclick="setMode(1)">FLAME</button>
         <button onclick="setMode(2)">OCEAN</button>
@@ -392,50 +353,46 @@
       </div>
     </div>
 
-    <!-- ユーティリティ -->
     <div class="card">
       <div class="label"><span>Utilities</span></div>
       <div class="grid-2">
-        <button onclick="clearAll()">CLEAR (cmd 0x02)</button>
+        <button onclick="clearAll()">CLEAR</button>
         <button class="btn-danger" onclick="setMode(255)">OFF</button>
       </div>
     </div>
 
-    <!-- ログ -->
     <div class="card">
       <div class="label"><span>Debug Log</span>
         <span class="value" style="cursor:pointer" onclick="document.getElementById('log').innerHTML=''">[clear]</span>
       </div>
-      <div id="log" class="log">起動中...</div>
+      <div id="log" class="log">Initializing...</div>
     </div>
 
   </div>
 
   <script>
-    /* ==========================================================================
-       VIOLA BLE Controller — for Viola Matrix Display Driver Rev.2.1
-       --------------------------------------------------------------------------
-       Hardware:
-         - ESP32-WROOM-32E
-         - IS31FL3729 × 2 (Chip A: 0x34 R+G,  Chip B: 0x37 B)  ← AD=VCC でB側
-         - 8x8 RGB Common-Anode matrix via 40-pin FPC
+    /* ============================================================================
+       VIOLA BLE Controller (Web App)
+       For: Viola Matrix Display Driver Rev.2.1
     
-       BLE Service (Nordic UART-like, per Spec Rev.4.1 §8.1):
-         SERVICE  : 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
-         RX (W)   : 6E400002-B5A3-F393-E0A9-E50E24DCCA9E   ← App → ESP32
-         TX (N)   : 6E400003-B5A3-F393-E0A9-E50E24DCCA9E   ← ESP32 → App (battery)
+       BLE Service (Nordic UART-compatible):
+         Service : 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
+         RX (W)  : 6E400002-...   App  → ESP32
+         TX (N)  : 6E400003-...   ESP32 → App  (battery telemetry)
     
-       Command Protocol (App → ESP32, written to RX char):
-         [0x01][x][y][R][G][B]      Per-pixel update (6B)
-         [0x02]                     Clear all  (1B)
-         [0x03][gcc]                Set GCC 0..0x40 (2B)
-         [0x04][R][G][B]            Solid fill  (4B)
-         [0x05][mode]               Built-in effect (mode 0..5, 255=OFF)
-         [0x06][len][utf8 bytes...] Scroll text (2+N B, len ≤ 50)
+       Command set (App → ESP32, written to RX char):
+         [0x01][x][y][R][G][B]      Per-pixel update      (6 B)
+         [0x02]                     Clear all             (1 B)
+         [0x03][gcc]                Set GCC 0..0x40       (2 B)
+         [0x04][R][G][B]            Solid fill            (4 B)
+         [0x05][mode]               Built-in effect       (2 B)
+                                      0=static, 1=flame, 2=ocean, 3=pastel,
+                                      4=flower, 5=aurora, 255=off
+         [0x06][len][utf8 bytes]    Scrolling text        (2+N B)
     
-       Notification format (ESP32 → App, from TX char):
-         [0xB0][volt_hi][volt_lo]   Battery in millivolts (big-endian, every 5s)
-       ========================================================================== */
+       Notification (ESP32 → App, from TX char):
+         [0xB0][mv_hi][mv_lo]       Battery in millivolts (big-endian, 5s period)
+       ============================================================================ */
 
     const UART_SVC = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
     const UART_RX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
@@ -459,53 +416,31 @@
 
     // ---------- Status UI ----------
     function setStatus(state, text) {
-      const dot = $('statusDot'), st = $('statusText');
-      dot.className = 'dot ' + state;
-      st.textContent = text;
+      $('statusDot').className = 'dot ' + state;
+      $('statusText').textContent = text;
       $('connectBtn').disabled = (state === 'connecting' || state === 'connected');
       $('disconnectBtn').disabled = (state !== 'connected');
-    }
-
-    // ---------- 8x8 LED preview grid ----------
-    const matrixEl = $('matrix'), leds = [];
-    for (let i = 0; i < 64; i++) {
-      const led = document.createElement('div');
-      led.className = 'led';
-      matrixEl.appendChild(led);
-      leds.push(led);
-    }
-    function previewSet(x, y, r, g, b) {
-      const i = y * 8 + x;
-      if (leds[i]) {
-        const k = gcc / 64;
-        leds[i].style.background = `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(b * k)})`;
-      }
-    }
-    function previewFill(r, g, b) {
-      for (let y = 0; y < 8; y++)for (let x = 0; x < 8; x++)previewSet(x, y, r, g, b);
-    }
-    function previewClear() {
-      leds.forEach(l => l.style.background = '#0a0a0a');
     }
 
     // ---------- BLE: Connect ----------
     async function connect() {
       if (!navigator.bluetooth) {
-        log('Web Bluetooth未対応のブラウザです（Chrome/Edge推奨）', 'err');
-        setStatus('error', 'Web Bluetooth未対応');
+        log('Web Bluetooth not supported (use Chrome / Edge)', 'err');
+        setStatus('error', 'Web Bluetooth not supported');
         return;
       }
       try {
-        setStatus('connecting', 'スキャン中...');
-        log('navigator.bluetooth.requestDevice() ...');
+        setStatus('connecting', 'Scanning for devices...');
+        log('Requesting device...');
         device = await navigator.bluetooth.requestDevice({
           filters: [{ namePrefix: 'VIOLA' }, { services: [UART_SVC] }],
           optionalServices: [UART_SVC]
         });
-        log(`Device: ${device.name || '(unnamed)'}`);
+        $('devName').textContent = device.name || '(unnamed)';
+        log(`Found: ${device.name || '(unnamed)'}`);
         device.addEventListener('gattserverdisconnected', onDisconnected);
 
-        setStatus('connecting', 'GATT接続中...');
+        setStatus('connecting', 'Connecting to GATT...');
         server = await device.gatt.connect();
         const svc = await server.getPrimaryService(UART_SVC);
         rxChar = await svc.getCharacteristic(UART_RX);
@@ -515,53 +450,52 @@
         txChar.addEventListener('characteristicvaluechanged', onNotify);
 
         connected = true;
-        setStatus('connected', '接続済み — VIOLA Rev.2.1');
-        log('接続完了。Notification購読開始', 'ok');
+        setStatus('connected', 'Connected — VIOLA Rev.2.1');
+        log('Connection established. Notifications subscribed.', 'ok');
 
-        // 初期同期: 現在のGCCを送る
+        // Sync current GCC to FW
         await sendGcc(gcc);
       } catch (e) {
-        log(`接続失敗: ${e.message}`, 'err');
-        setStatus('error', '接続失敗');
+        log(`Connection failed: ${e.message}`, 'err');
+        setStatus('error', 'Connection failed');
       }
     }
 
     async function disconnect() {
-      if (device && device.gatt.connected) {
-        device.gatt.disconnect();
-      }
-    }
-    function onDisconnected() {
-      connected = false; rxChar = null; txChar = null;
-      setStatus('', '切断されました');
-      $('battReadout').textContent = '— V';
-      log('Disconnected', 'err');
+      if (device && device.gatt.connected) device.gatt.disconnect();
     }
 
-    // ---------- BLE: Notification (battery) ----------
+    function onDisconnected() {
+      connected = false;
+      rxChar = null;
+      txChar = null;
+      setStatus('', 'Disconnected');
+      $('battReadout').textContent = '— V';
+      $('battReadout').style.color = '#888';
+      $('devName').textContent = '—';
+      log('Disconnected from device', 'err');
+    }
+
+    // ---------- BLE: Notification handler (battery telemetry) ----------
     function onNotify(ev) {
-      const v = ev.target.value; // DataView
+      const v = ev.target.value;
       if (v.byteLength < 3) return;
       const tag = v.getUint8(0);
       if (tag === 0xB0) {
         const mv = v.getUint16(1, false); // big-endian
         const volts = (mv / 1000).toFixed(2);
         $('battReadout').textContent = `${volts} V`;
-        // 低電圧警告
-        if (mv < 3400) {
-          $('battReadout').style.color = 'var(--danger)';
-        } else if (mv < 3700) {
-          $('battReadout').style.color = 'var(--warn)';
-        } else {
-          $('battReadout').style.color = 'var(--good)';
-        }
+        if (mv < 3400) $('battReadout').style.color = 'var(--danger)';
+        else if (mv < 3700) $('battReadout').style.color = 'var(--warn)';
+        else $('battReadout').style.color = 'var(--good)';
+        log(`RX battery: ${mv} mV`, 'rx');
       }
     }
 
     // ---------- BLE: Send wrapper ----------
     async function sendCmd(bytes) {
       if (!connected || !rxChar) {
-        log('未接続のため送信できません', 'err');
+        log('Not connected — cannot send', 'err');
         return false;
       }
       try {
@@ -570,65 +504,45 @@
         log(`TX: ${hex}`, 'tx');
         return true;
       } catch (e) {
-        log(`送信エラー: ${e.message}`, 'err');
+        log(`Send error: ${e.message}`, 'err');
         return false;
       }
     }
 
-    // ---------- Commands ----------
-    async function sendPixel(x, y, r, g, b) {
-      previewSet(x, y, r, g, b);
-      await sendCmd([0x01, x & 7, y & 7, r & 0xff, g & 0xff, b & 0xff]);
-    }
-    async function clearAll() {
-      previewClear();
-      await sendCmd([0x02]);
-    }
-    async function sendGcc(g) {
-      await sendCmd([0x03, g & 0x7F]);
-    }
-    async function sendSolid(r, g, b) {
-      previewFill(r, g, b);
-      await sendCmd([0x04, r & 0xff, g & 0xff, b & 0xff]);
-    }
-    async function setMode(modeId) {
-      await sendCmd([0x05, modeId & 0xff]);
-      if (modeId === 0 || modeId === 255) previewClear();
-      else {
-        // ローカルプレビューで雰囲気だけ表示（実描画はESP32側）
-        previewModeHint(modeId);
-      }
-    }
+    // ---------- High-level commands ----------
+    async function clearAll() { await sendCmd([0x02]); }
+    async function sendGcc(g) { await sendCmd([0x03, g & 0x7F]); }
+    async function sendSolid(r, g, b) { await sendCmd([0x04, r & 0xff, g & 0xff, b & 0xff]); }
+    async function setMode(modeId) { await sendCmd([0x05, modeId & 0xff]); }
+
     async function sendText() {
       const txt = $('scrollText').value;
-      if (!txt) { log('テキストが空です', 'err'); return }
+      if (!txt) { log('Text is empty', 'err'); return; }
       const enc = new TextEncoder();
       const utf8 = enc.encode(txt);
-      if (utf8.length > 50) { log('UTF-8長が50バイトを超過', 'err'); return }
+      if (utf8.length > 50) { log('Text exceeds 50 bytes', 'err'); return; }
       await sendCmd([0x06, utf8.length, ...utf8]);
     }
 
     // ---------- GCC slider ----------
     function onGccChange(v) {
       gcc = parseInt(v, 10);
-      $('gccVal').textContent = `0x${gcc.toString(16).padStart(2, '0').toUpperCase()} / ${gcc}`;
+      $('gccVal').textContent = `0x${gcc.toString(16).padStart(2, '0').toUpperCase()} (${gcc}/64)`;
       if (connected) sendGcc(gcc);
-      // プレビューに即反映
-      for (let y = 0; y < 8; y++)for (let x = 0; x < 8; x++) {
-        const cur = leds[y * 8 + x].style.background;
-        if (cur && cur !== 'rgb(10, 10, 10)') {/* ignore — gcc is preview-side multiplier next time */ }
-      }
     }
 
     // ---------- Color Wheel ----------
     const wheel = $('colorWheel');
+    let wheelDpr = 1;
+
     function drawWheel() {
-      const dpr = window.devicePixelRatio || 1;
+      wheelDpr = window.devicePixelRatio || 1;
       const w = wheel.clientWidth, h = wheel.clientHeight;
-      wheel.width = w * dpr; wheel.height = h * dpr;
+      wheel.width = w * wheelDpr;
+      wheel.height = h * wheelDpr;
       const ctx = wheel.getContext('2d');
-      ctx.scale(dpr, dpr);
-      // HSV color band (horizontal hue, vertical lightness)
+      ctx.setTransform(wheelDpr, 0, 0, wheelDpr, 0, 0);
+      // Hue horizontally, lightness vertically
       for (let x = 0; x < w; x++) {
         const hue = (x / w) * 360;
         const grd = ctx.createLinearGradient(0, 0, 0, h);
@@ -639,55 +553,53 @@
         ctx.fillRect(x, 0, 1, h);
       }
     }
+
     function pickColor(ev) {
       const rect = wheel.getBoundingClientRect();
-      const cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
-      const cy = (ev.touches ? ev.touches[0].clientY : ev.clientY) - rect.top;
+      const cx = (ev.clientX !== undefined ? ev.clientX : ev.touches[0].clientX) - rect.left;
+      const cy = (ev.clientY !== undefined ? ev.clientY : ev.touches[0].clientY) - rect.top;
+      const cw = wheel.clientWidth, ch = wheel.clientHeight;
+      const xx = Math.max(0, Math.min(cw - 1, cx));
+      const yy = Math.max(0, Math.min(ch - 1, cy));
       const ctx = wheel.getContext('2d');
-      const dpr = window.devicePixelRatio || 1;
-      const px = ctx.getImageData(cx * dpr, cy * dpr, 1, 1).data;
+      // Read with DPR-aware coordinates
+      const px = ctx.getImageData(Math.floor(xx * wheelDpr), Math.floor(yy * wheelDpr), 1, 1).data;
       currentColor = { r: px[0], g: px[1], b: px[2] };
       updateColorUI();
-      if (connected) sendSolid(px[0], px[1], px[2]);
-      else previewFill(px[0], px[1], px[2]);
+      sendSolid(px[0], px[1], px[2]);
     }
+
     function updateColorUI() {
       const { r, g, b } = currentColor;
       const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
       $('colorHex').textContent = hex;
-      $('rgbText').textContent = `R:${r} G:${g} B:${b}`;
+      $('rgbText').textContent = `R: ${r}  G: ${g}  B: ${b}`;
       $('swatch').style.background = hex;
     }
-    wheel.addEventListener('pointerdown', e => { wheel.setPointerCapture(e.pointerId); pickColor(e) });
-    wheel.addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'touch') pickColor(e) });
 
-    // ---------- Local effect preview hint (mode start) ----------
-    function previewModeHint(modeId) {
-      // 内蔵モードの「予告」として簡易グラデーションを1枚だけ描画
-      const palettes = {
-        1: [[255, 40, 0], [255, 180, 0], [255, 255, 150]],   // FLAME
-        2: [[0, 40, 120], [0, 150, 200], [180, 230, 255]],   // OCEAN
-        3: [[255, 180, 220], [200, 255, 200], [255, 230, 150]], // PASTEL
-        4: [[255, 80, 180], [180, 80, 255], [80, 180, 255]], // FLOWER
-        5: [[80, 255, 150], [80, 180, 255], [200, 80, 255]]  // AURORA
-      };
-      const pal = palettes[modeId];
-      if (!pal) return;
-      for (let y = 0; y < 8; y++) {
-        const t = y / 7, idx = Math.min(pal.length - 1, Math.floor(t * pal.length));
-        const [r, g, b] = pal[idx];
-        for (let x = 0; x < 8; x++)previewSet(x, y, r, g, b);
-      }
-    }
+    let wheelDragging = false;
+    wheel.addEventListener('pointerdown', e => {
+      wheelDragging = true;
+      wheel.setPointerCapture(e.pointerId);
+      pickColor(e);
+    });
+    wheel.addEventListener('pointermove', e => {
+      if (wheelDragging) pickColor(e);
+    });
+    wheel.addEventListener('pointerup', e => {
+      wheelDragging = false;
+      try { wheel.releasePointerCapture(e.pointerId); } catch { }
+    });
+    wheel.addEventListener('pointercancel', () => { wheelDragging = false; });
 
     // ---------- Init ----------
     window.addEventListener('load', () => {
       drawWheel();
-      setStatus('', '未接続 — タップで接続');
-      log('VIOLA BLE Controller v2.0 ready', 'ok');
-      log(`Service: ${UART_SVC.slice(0, 8)}...`);
+      setStatus('', 'Disconnected — tap to connect');
+      log('VIOLA BLE Controller v3 ready', 'ok');
+      log(`Service UUID: ${UART_SVC}`);
       if (!navigator.bluetooth) {
-        log('警告: このブラウザはWeb Bluetooth非対応', 'err');
+        log('Warning: Web Bluetooth unavailable in this browser', 'err');
       }
     });
     window.addEventListener('resize', drawWheel);
