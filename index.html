@@ -222,11 +222,10 @@
 
     #colorWheel {
       width: 100%;
-      height: 160px;
-      border-radius: 12px;
+      aspect-ratio: 1/1;
       cursor: crosshair;
       touch-action: none;
-      background: #000;
+      background: transparent;
       display: block
     }
 
@@ -531,42 +530,153 @@
       if (connected) sendGcc(gcc);
     }
 
-    // ---------- Color Wheel ----------
+    // ---------- Color Wheel (circular HSV picker) ----------
+    //
+    // Layout:
+    //   - Polar coordinates: angle = hue (0..360°), radius = saturation (0..1)
+    //   - Center is white (s=0), outer edge is fully saturated (s=1)
+    //   - Value (brightness) is fixed at 1.0 here; LED brightness is set by
+    //     the GCC slider, which is the right semantic for an LED panel.
+    //
+    // Out-of-circle behavior:
+    //   When the user's finger drifts outside the circle while dragging,
+    //   pickColor() returns early without updating currentColor or sending
+    //   a new BLE command. This means the panel keeps the last in-circle
+    //   color until either (a) the finger returns inside the circle, or
+    //   (b) a fresh tap inside the circle starts a new pick.
+    //
+    // Performance:
+    //   Per-pixel HSV rasterization (~90 ms at 300×300 px) is expensive.
+    //   We render it once into an offscreen canvas and just blit + redraw
+    //   the indicator on every pick — that is fast enough for smooth drag.
     const wheel = $('colorWheel');
+    const wheelCache = document.createElement('canvas');  // offscreen base layer
     let wheelDpr = 1;
+    let wheelGeom = { cx: 0, cy: 0, r: 0 };            // CSS-pixel center & radius
+    let lastPickCss = null;                              // last in-circle pick (for indicator)
 
-    function drawWheel() {
+    // Render the base color wheel once into the offscreen canvas.
+    // Called on load and on resize, never during interaction.
+    function rasterizeBaseWheel() {
       wheelDpr = window.devicePixelRatio || 1;
       const w = wheel.clientWidth, h = wheel.clientHeight;
+
+      // Size both canvases (visible + offscreen cache) to DPR-scaled pixels
       wheel.width = w * wheelDpr;
       wheel.height = h * wheelDpr;
-      const ctx = wheel.getContext('2d');
-      ctx.setTransform(wheelDpr, 0, 0, wheelDpr, 0, 0);
-      // Hue horizontally, lightness vertically
-      for (let x = 0; x < w; x++) {
-        const hue = (x / w) * 360;
-        const grd = ctx.createLinearGradient(0, 0, 0, h);
-        grd.addColorStop(0, `hsl(${hue},100%,90%)`);
-        grd.addColorStop(0.5, `hsl(${hue},100%,50%)`);
-        grd.addColorStop(1, `hsl(${hue},100%,10%)`);
-        ctx.fillStyle = grd;
-        ctx.fillRect(x, 0, 1, h);
+      wheelCache.width = w * wheelDpr;
+      wheelCache.height = h * wheelDpr;
+
+      const cx = w / 2, cy = h / 2;
+      const r = Math.min(cx, cy) - 1;     // 1 px inset to avoid edge clipping
+      wheelGeom = { cx, cy, r };
+
+      // Per-pixel HSV → RGB rasterization into the cache
+      const cctx = wheelCache.getContext('2d');
+      const W = wheelCache.width, H = wheelCache.height;
+      const img = cctx.createImageData(W, H);
+      const data = img.data;
+      const dpr = wheelDpr;
+      const cxp = cx * dpr, cyp = cy * dpr, rp = r * dpr;
+
+      for (let py = 0; py < H; py++) {
+        for (let px = 0; px < W; px++) {
+          const dx = px - cxp;
+          const dy = py - cyp;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const i = (py * W + px) * 4;
+          if (dist > rp) {
+            data[i + 3] = 0;                          // outside circle = transparent
+            continue;
+          }
+          let ang = Math.atan2(dy, dx);                // -π..π
+          if (ang < 0) ang += Math.PI * 2;             // 0..2π
+          const hue = (ang * 180) / Math.PI;           // 0..360
+          const sat = Math.min(1, dist / rp);          // 0..1
+          const [r8, g8, b8] = hsvToRgb(hue, sat, 1);
+          data[i] = r8;
+          data[i + 1] = g8;
+          data[i + 2] = b8;
+          data[i + 3] = 255;
+        }
       }
+      cctx.putImageData(img, 0, 0);
+
+      // Draw the visible canvas (cache + indicator)
+      drawWheel();
+    }
+
+    // Composite the cached wheel onto the visible canvas, plus the indicator.
+    // Called every time the picked position changes — needs to be fast.
+    function drawWheel() {
+      const ctx = wheel.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);             // identity, work in device px
+      ctx.clearRect(0, 0, wheel.width, wheel.height);
+      ctx.drawImage(wheelCache, 0, 0);
+
+      // Indicator (drawn in CSS px space, so re-apply DPR scale)
+      if (lastPickCss) {
+        ctx.setTransform(wheelDpr, 0, 0, wheelDpr, 0, 0);
+        ctx.beginPath();
+        ctx.arc(lastPickCss.x, lastPickCss.y, 7, 0, Math.PI * 2);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#000';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(lastPickCss.x, lastPickCss.y, 7, 0, Math.PI * 2);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#fff';
+        ctx.stroke();
+      }
+    }
+
+    // HSV to RGB — h in [0,360), s/v in [0,1]. Returns [r,g,b] in [0,255].
+    function hsvToRgb(h, s, v) {
+      const c = v * s;
+      const hh = (h / 60) % 6;
+      const x = c * (1 - Math.abs((hh % 2) - 1));
+      let r = 0, g = 0, b = 0;
+      if (hh < 1) { r = c; g = x; }
+      else if (hh < 2) { r = x; g = c; }
+      else if (hh < 3) { g = c; b = x; }
+      else if (hh < 4) { g = x; b = c; }
+      else if (hh < 5) { r = x; b = c; }
+      else { r = c; b = x; }
+      const m = v - c;
+      return [
+        Math.round((r + m) * 255),
+        Math.round((g + m) * 255),
+        Math.round((b + m) * 255)
+      ];
     }
 
     function pickColor(ev) {
       const rect = wheel.getBoundingClientRect();
-      const cx = (ev.clientX !== undefined ? ev.clientX : ev.touches[0].clientX) - rect.left;
-      const cy = (ev.clientY !== undefined ? ev.clientY : ev.touches[0].clientY) - rect.top;
-      const cw = wheel.clientWidth, ch = wheel.clientHeight;
-      const xx = Math.max(0, Math.min(cw - 1, cx));
-      const yy = Math.max(0, Math.min(ch - 1, cy));
-      const ctx = wheel.getContext('2d');
-      // Read with DPR-aware coordinates
-      const px = ctx.getImageData(Math.floor(xx * wheelDpr), Math.floor(yy * wheelDpr), 1, 1).data;
+      const x = (ev.clientX !== undefined ? ev.clientX : ev.touches[0].clientX) - rect.left;
+      const y = (ev.clientY !== undefined ? ev.clientY : ev.touches[0].clientY) - rect.top;
+
+      const dx = x - wheelGeom.cx;
+      const dy = y - wheelGeom.cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // Out of circle → DO NOT change color. Keeps the last in-circle pick
+      // active until the finger comes back inside or a new tap occurs.
+      if (dist > wheelGeom.r) return;
+
+      // Read color from cached pixel (much cheaper than from the live canvas
+      // if we'd overdrawn it with the indicator).
+      const cctx = wheelCache.getContext('2d');
+      const px = cctx.getImageData(
+        Math.floor(x * wheelDpr),
+        Math.floor(y * wheelDpr),
+        1, 1
+      ).data;
+
       currentColor = { r: px[0], g: px[1], b: px[2] };
+      lastPickCss = { x, y };
       updateColorUI();
       sendSolid(px[0], px[1], px[2]);
+      drawWheel();    // cheap: just blit + indicator
     }
 
     function updateColorUI() {
@@ -594,7 +704,7 @@
 
     // ---------- Init ----------
     window.addEventListener('load', () => {
-      drawWheel();
+      rasterizeBaseWheel();
       setStatus('', 'Disconnected — tap to connect');
       log('VIOLA BLE Controller v3 ready', 'ok');
       log(`Service UUID: ${UART_SVC}`);
@@ -602,7 +712,7 @@
         log('Warning: Web Bluetooth unavailable in this browser', 'err');
       }
     });
-    window.addEventListener('resize', drawWheel);
+    window.addEventListener('resize', rasterizeBaseWheel);
   </script>
 </body>
 
