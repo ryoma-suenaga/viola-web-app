@@ -4,21 +4,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VIOLA | ams OSRAM BLE Controller</title>
+  <title>ams OSRAM | LED Module Controller</title>
   <style>
     :root {
       --accent: #ff5e00;
       --accent-dim: #cc4a00;
       --bg: #050505;
+      --bg-elev: #0c0c0c;
       --card: #141414;
+      --card-hover: #1c1c1c;
       --text: #fff;
+      --text-dim: #888;
+      --text-faint: #555;
       --good: #00d96b;
       --warn: #ffb000;
       --danger: #ff3b30;
+      --border: rgba(255, 255, 255, 0.08);
     }
 
     * {
-      box-sizing: border-box
+      box-sizing: border-box;
     }
 
     body {
@@ -26,371 +31,745 @@
       background: var(--bg);
       color: var(--text);
       margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       min-height: 100vh;
-      padding-bottom: 50px
+      padding-bottom: 50px;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .header {
+    /* ===== Header (always visible) ===== */
+    .app-header {
       width: 100%;
-      padding: 30px 0 18px;
+      padding: 18px 20px 14px;
       text-align: center;
-      background: linear-gradient(180deg, #111 0%, transparent 100%)
+      background: linear-gradient(180deg, #111 0%, transparent 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-direction: column;
     }
 
     .brand {
-      font-size: 1.6rem;
+      font-size: 1.4rem;
       letter-spacing: 7px;
       font-weight: 200;
       color: var(--accent);
-      text-shadow: 0 0 20px rgba(255, 94, 0, .4)
+      text-shadow: 0 0 20px rgba(255, 94, 0, .4);
     }
 
-    h1 {
-      margin: 6px 0 0;
-      font-size: .7rem;
-      letter-spacing: 4px;
-      font-weight: 300;
-      color: #666;
-      text-transform: uppercase
+    .app-header h1 {
+      margin: 0;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
 
-    /* --- Status / Connection bar --- */
+    /* ===== Back-to-launcher button (only shown in app views) ===== */
+    .back-bar {
+      display: none;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 18px 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .back-bar.show {
+      display: flex;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 6px 14px;
+      border-radius: 18px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      font-family: inherit;
+    }
+
+    .back-btn:hover {
+      color: var(--text);
+      border-color: var(--text-dim);
+    }
+
+    .module-pill {
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ===== Status Bar (always visible after first connect) ===== */
     .status-bar {
-      width: 92%;
-      max-width: 400px;
-      margin: 8px 0 12px;
-      padding: 14px;
-      background: var(--card);
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto 14px;
+      padding: 10px 18px;
+      background: var(--bg-elev);
       border-radius: 12px;
-      border: 1px solid #222;
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: .78rem
+      font-size: 0.75rem;
+      border: 1px solid var(--border);
     }
 
     .dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: #444;
-      flex-shrink: 0;
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, .04)
-    }
-
-    .dot.connected {
-      background: var(--good);
-      box-shadow: 0 0 8px var(--good)
+      background: var(--text-faint);
+      transition: all 0.2s;
     }
 
     .dot.connecting {
       background: var(--warn);
-      animation: pulse 1s infinite
+      animation: pulse 1s infinite;
+    }
+
+    .dot.connected {
+      background: var(--good);
+      box-shadow: 0 0 8px var(--good);
     }
 
     .dot.error {
-      background: var(--danger)
+      background: var(--danger);
     }
 
     @keyframes pulse {
 
       0%,
       100% {
-        opacity: 1
+        opacity: 1;
       }
 
       50% {
-        opacity: .3
+        opacity: 0.3;
       }
     }
 
     .status-text {
       flex: 1;
-      color: #aaa
+      color: var(--text-dim);
     }
 
     .batt {
-      font-family: monospace;
-      color: #888;
-      font-size: .78rem;
-      font-weight: 600;
-      letter-spacing: .5px
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.75rem;
+      color: var(--text-dim);
     }
 
+    /* ===== Container ===== */
     .container {
-      width: 92%;
-      max-width: 400px;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 18px;
+    }
+
+    /* ===== Launcher screen ===== */
+    .launcher-intro {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      margin: 20px 0 24px;
+      line-height: 1.6;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .module-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      cursor: pointer;
+      transition: all 0.18s;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-top: 6px
+      gap: 8px;
+      text-align: left;
+      font-family: inherit;
+      color: var(--text);
     }
 
+    .module-card:hover {
+      background: var(--card-hover);
+      border-color: var(--accent-dim);
+      transform: translateY(-1px);
+    }
+
+    .module-card:active {
+      transform: translateY(0);
+    }
+
+    .module-card .icon {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 10px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(255, 94, 0, 0.15), rgba(255, 94, 0, 0.05));
+      border: 1px solid rgba(255, 94, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .module-card .title {
+      font-size: 1.05rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .module-card .subtitle {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .module-card .meta {
+      font-size: 0.65rem;
+      color: var(--text-faint);
+      margin-top: 6px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ===== Cards (used in both VIOLA and OSRAM views) ===== */
     .card {
       background: var(--card);
-      border-radius: 16px;
+      border-radius: 14px;
       padding: 16px;
-      border: 1px solid #222
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
     }
 
     .label {
-      font-size: .65rem;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      font-weight: 600
-    }
-
-    .label .value {
-      color: var(--accent);
-      font-family: monospace;
-      text-transform: none;
-      letter-spacing: .5px
-    }
-
-    button {
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      color: #eee;
-      padding: 11px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: .15s;
-      font-size: .78rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-family: inherit
-    }
-
-    button:hover:not(:disabled) {
-      border-color: #444
-    }
-
-    button:active:not(:disabled) {
-      transform: scale(.97)
-    }
-
-    button:disabled {
-      opacity: .35;
-      cursor: not-allowed
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      font-weight: 700;
-      width: 100%;
-      box-shadow: 0 4px 14px rgba(255, 94, 0, .25)
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: #ff7a30
-    }
-
-    .btn-danger {
-      color: #ff7766;
-      border-color: #3a1a1a
-    }
-
-    .btn-secondary {
-      background: #0a0a0a
-    }
-
-    .text-input {
-      width: 100%;
-      padding: 11px;
-      background: #000;
-      border: 1px solid #2a2a2a;
-      color: var(--accent);
-      border-radius: 8px;
-      font-family: monospace;
-      font-size: .85rem;
-      margin-bottom: 10px
-    }
-
-    .text-input:focus {
-      outline: none;
-      border-color: var(--accent)
-    }
-
-    #colorWheel {
-      width: 100%;
-      aspect-ratio: 1/1;
-      cursor: crosshair;
-      touch-action: none;
-      background: transparent;
-      display: block
-    }
-
-    .color-readout {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 10px;
-      font-family: monospace;
-      font-size: .72rem;
-      color: #888
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
-    .swatch {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      border: 1px solid #333;
-      box-shadow: 0 0 12px rgba(0, 0, 0, .6)
+    .label .value {
+      font-family: 'SF Mono', Monaco, monospace;
+      color: var(--accent);
+      font-size: 0.7rem;
+      text-transform: none;
+      letter-spacing: 0;
     }
 
-    input[type=range] {
+    /* ===== Buttons ===== */
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .btn-primary,
+    .grid-2 button,
+    .grid-3 button {
+      background: linear-gradient(180deg, #1f1f1f, #161616);
+      border: 1px solid #2a2a2a;
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      letter-spacing: 1px;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+
+    .btn-primary:hover,
+    .grid-2 button:hover,
+    .grid-3 button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-primary:disabled,
+    .grid-2 button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, var(--accent), var(--accent-dim));
+      border: none;
       width: 100%;
-      accent-color: var(--accent);
-      margin: 4px 0
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      color: white;
+      filter: brightness(1.1);
+    }
+
+    .btn-danger {
+      background: #1a0a0a;
+      border: 1px solid #4a1a1a;
+      color: var(--danger);
+    }
+
+    .btn-secondary {
+      background: #1a1a1a;
     }
 
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px
+      gap: 8px;
     }
 
     .grid-3 {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px
+      gap: 8px;
     }
 
+    /* ===== Color wheel (shared) ===== */
+    #colorWheel,
+    #colorWheelOsram {
+      width: 220px;
+      height: 220px;
+      margin: 4px auto 8px;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .color-readout {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-family: 'SF Mono', Monaco, monospace;
+      margin-top: 4px;
+    }
+
+    .swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    /* ===== Range slider ===== */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background: #222;
+      border-radius: 2px;
+      outline: none;
+      margin: 6px 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(255, 94, 0, 0.5);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: none;
+    }
+
+    /* ===== Text input ===== */
+    .text-input {
+      width: 100%;
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* ===== Log ===== */
     .log {
-      background: #000;
+      background: #0a0a0a;
       border: 1px solid #1a1a1a;
       border-radius: 8px;
-      padding: 8px;
-      font-family: monospace;
-      font-size: .65rem;
-      color: #666;
-      max-height: 90px;
+      padding: 10px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.65rem;
+      height: 120px;
       overflow-y: auto;
-      line-height: 1.4
-    }
-
-    .log .err {
-      color: #ff6b6b
+      color: var(--text-dim);
+      line-height: 1.5;
     }
 
     .log .ok {
-      color: #5dd07a
+      color: var(--good);
+    }
+
+    .log .err {
+      color: var(--danger);
     }
 
     .log .tx {
-      color: var(--accent)
+      color: var(--accent);
     }
 
     .log .rx {
-      color: #5db8ff
+      color: #4a9eff;
+    }
+
+    /* ===== Views ===== */
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    /* ===== OSRAM-specific ===== */
+    .osram-preview-wrap {
+      background: #000;
+      border-radius: 10px;
+      padding: 18px;
+      overflow-x: auto;
+    }
+
+    .osram-preview-wrap svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .effect-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .effect-btn {
+      background: linear-gradient(180deg, #1f1f1f, #161616);
+      border: 1px solid #2a2a2a;
+      color: var(--text);
+      padding: 14px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      letter-spacing: 0.5px;
+      transition: all 0.15s;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .effect-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .effect-btn.active {
+      background: linear-gradient(180deg, var(--accent), var(--accent-dim));
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .effect-btn .num {
+      display: block;
+      font-size: 0.55rem;
+      opacity: 0.5;
+      margin-bottom: 2px;
+    }
+
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      color: var(--text-faint);
+      font-size: 0.62rem;
+      margin-top: 32px;
+      padding: 0 18px;
+      letter-spacing: 1px;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="header">
-    <div class="brand">VIOLA</div>
-    <h1>ams OSRAM Matrix Controller — BLE</h1>
+  <!-- ========================= Header (always visible) ========================= -->
+  <div class="app-header">
+    <div class="brand">ams OSRAM</div>
+    <h1 id="moduleSubtitle">LED Module Controller</h1>
   </div>
 
-  <div class="status-bar">
+  <!-- ========================= Back bar (only in app views) ========================= -->
+  <div class="back-bar" id="backBar">
+    <button class="back-btn" onclick="showLauncher()">← Modules</button>
+    <span class="module-pill" id="modulePill">VIOLA</span>
+  </div>
+
+  <!-- ========================= Status bar (only after connection attempted) ========================= -->
+  <div class="status-bar" id="statusBar" style="display:none">
     <div id="statusDot" class="dot"></div>
-    <div id="statusText" class="status-text">Disconnected — tap to connect</div>
+    <div id="statusText" class="status-text">Disconnected</div>
     <div id="battReadout" class="batt">— V</div>
   </div>
 
-  <div class="container">
+  <!-- ========================= LAUNCHER ========================= -->
+  <div class="view active" id="launcherView">
+    <div class="container">
+      <div class="launcher-intro">
+        Select an LED module to control.<br>
+        Your phone or computer connects to the module via Bluetooth.
+      </div>
 
-    <div class="card">
-      <div class="label"><span>Connection</span><span id="devName" class="value">—</span></div>
-      <div class="grid-2">
-        <button id="connectBtn" class="btn-primary" onclick="connect()">CONNECT</button>
-        <button id="disconnectBtn" class="btn-danger" onclick="disconnect()" disabled>DISCONNECT</button>
+      <div class="module-grid">
+
+        <button class="module-card" onclick="enterViolaApp()">
+          <div class="icon">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect x="6" y="6" width="4" height="4" rx="1" fill="#ff5e00" />
+              <rect x="14" y="6" width="4" height="4" rx="1" fill="#ff5e00" opacity="0.7" />
+              <rect x="22" y="6" width="4" height="4" rx="1" fill="#ff5e00" opacity="0.4" />
+              <rect x="6" y="14" width="4" height="4" rx="1" fill="#ff5e00" opacity="0.7" />
+              <rect x="14" y="14" width="4" height="4" rx="1" fill="#ff5e00" />
+              <rect x="22" y="14" width="4" height="4" rx="1" fill="#ff5e00" opacity="0.7" />
+              <rect x="6" y="22" width="4" height="4" rx="1" fill="#ff5e00" opacity="0.4" />
+              <rect x="14" y="22" width="4" height="4" rx="1" fill="#ff5e00" opacity="0.7" />
+              <rect x="22" y="22" width="4" height="4" rx="1" fill="#ff5e00" />
+            </svg>
+          </div>
+          <div class="title">8 × 8 MatrixArray Module</div>
+          <div class="subtitle">VIOLA — 64-pixel programmable RGB matrix with per-pixel color, built-in effects, and
+            scrolling text.</div>
+          <div class="meta">Device: x64 LED Driver</div>
+        </button>
+
+        <button class="module-card" onclick="enterOsramApp()">
+          <div class="icon">
+            <svg width="64" height="32" viewBox="0 0 64 32" fill="none" preserveAspectRatio="xMidYMid meet">
+              <circle cx="6" cy="16" r="2" fill="#ff5e00" />
+              <circle cx="11" cy="9" r="2" fill="#ff5e00" />
+              <circle cx="11" cy="23" r="2" fill="#ff5e00" />
+              <circle cx="17" cy="16" r="2" fill="#ff5e00" opacity="0.7" />
+              <circle cx="22" cy="9" r="2" fill="#ff5e00" />
+              <circle cx="27" cy="9" r="2" fill="#ff5e00" />
+              <circle cx="27" cy="16" r="2" fill="#ff5e00" />
+              <circle cx="22" cy="23" r="2" fill="#ff5e00" />
+              <circle cx="27" cy="23" r="2" fill="#ff5e00" />
+              <circle cx="34" cy="9" r="2" fill="#ff5e00" opacity="0.7" />
+              <circle cx="34" cy="16" r="2" fill="#ff5e00" opacity="0.7" />
+              <circle cx="34" cy="23" r="2" fill="#ff5e00" opacity="0.7" />
+              <circle cx="40" cy="9" r="2" fill="#ff5e00" opacity="0.7" />
+              <circle cx="40" cy="23" r="2" fill="#ff5e00" opacity="0.7" />
+              <circle cx="46" cy="9" r="2" fill="#ff5e00" opacity="0.4" />
+              <circle cx="51" cy="16" r="2" fill="#ff5e00" opacity="0.4" />
+              <circle cx="56" cy="9" r="2" fill="#ff5e00" opacity="0.4" />
+              <circle cx="56" cy="23" r="2" fill="#ff5e00" opacity="0.4" />
+            </svg>
+          </div>
+          <div class="title">OSRAM Logo Module</div>
+          <div class="subtitle">64 LEDs shaped as the OSRAM letters with coordinate-based effects designed for the logo
+            geometry.</div>
+          <div class="meta">Device: x64 LED Driver</div>
+        </button>
+
+      </div>
+
+      <div class="footer">
+        ams OSRAM · LED Module Controller v1.0<br>
+        Web Bluetooth · Chrome / Edge required
       </div>
     </div>
-
-    <div class="card">
-      <div class="label"><span>Solid Color (Whole Panel)</span><span id="colorHex" class="value">#FF5E00</span></div>
-      <canvas id="colorWheel"></canvas>
-      <div class="color-readout">
-        <span id="rgbText">R: 255 G: 94 B: 0</span>
-        <div id="swatch" class="swatch" style="background:#ff5e00"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="label"><span>Global Brightness (GCC)</span><span id="gccVal" class="value">0x20 (32/64)</span></div>
-      <input type="range" id="gccRange" min="0" max="64" value="32" oninput="onGccChange(this.value)">
-      <div style="font-size:.6rem;color:#555;text-align:right">IS31FL3729 register A1h, 7-bit (0–0x40)</div>
-    </div>
-
-    <div class="card">
-      <div class="label"><span>Scrolling Text</span><span class="value">ASCII, 50 chars</span></div>
-      <input type="text" id="scrollText" class="text-input" maxlength="50" placeholder="Enter message...">
-      <button class="btn-primary" onclick="sendText()">SEND TEXT</button>
-    </div>
-
-    <div class="card">
-      <div class="label"><span>Built-in Effects (FW-side)</span><span class="value">Perlin noise</span></div>
-      <div class="grid-3">
-        <button onclick="setMode(1)">FLAME</button>
-        <button onclick="setMode(2)">OCEAN</button>
-        <button onclick="setMode(3)">PASTEL</button>
-        <button onclick="setMode(4)">FLOWER</button>
-        <button onclick="setMode(5)">AURORA</button>
-        <button class="btn-secondary" onclick="setMode(0)">STATIC</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="label"><span>Utilities</span></div>
-      <div class="grid-2">
-        <button onclick="clearAll()">CLEAR</button>
-        <button class="btn-danger" onclick="setMode(255)">OFF</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="label"><span>Debug Log</span>
-        <span class="value" style="cursor:pointer" onclick="document.getElementById('log').innerHTML=''">[clear]</span>
-      </div>
-      <div id="log" class="log">Initializing...</div>
-    </div>
-
   </div>
+
+
+  <!-- ========================= VIOLA VIEW ========================= -->
+  <div class="view" id="violaView">
+    <div class="container">
+
+      <div class="card">
+        <div class="label"><span>Connection</span><span id="violaDevName" class="value">—</span></div>
+        <div class="grid-2">
+          <button id="violaConnectBtn" class="btn-primary" onclick="connect('viola')">CONNECT</button>
+          <button id="violaDisconnectBtn" class="btn-danger" onclick="disconnect()" disabled>DISCONNECT</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Solid Color (Whole Panel)</span><span id="colorHex" class="value">#FF5E00</span></div>
+        <canvas id="colorWheel"></canvas>
+        <div class="color-readout">
+          <span id="rgbText">R: 255 G: 94 B: 0</span>
+          <div id="swatch" class="swatch" style="background:#ff5e00"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Global Brightness (GCC)</span><span id="gccVal" class="value">0x20 (32/64)</span></div>
+        <input type="range" id="gccRange" min="0" max="64" value="32" oninput="onGccChange(this.value)">
+        <div style="font-size:.6rem;color:#555;text-align:right">IS31FL3729 register A1h, 7-bit (0–0x40)</div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Scrolling Text</span><span class="value">ASCII, 50 chars</span></div>
+        <input type="text" id="scrollText" class="text-input" maxlength="50" placeholder="Enter message...">
+        <button class="btn-primary" onclick="sendText()">SEND TEXT</button>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Built-in Effects (FW-side)</span><span class="value">Perlin noise</span></div>
+        <div class="grid-3">
+          <button onclick="setMode(1)">FLAME</button>
+          <button onclick="setMode(2)">OCEAN</button>
+          <button onclick="setMode(3)">PASTEL</button>
+          <button onclick="setMode(4)">FLOWER</button>
+          <button onclick="setMode(5)">AURORA</button>
+          <button class="btn-secondary" onclick="setMode(0)">STATIC</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Utilities</span></div>
+        <div class="grid-2">
+          <button onclick="clearAll()">CLEAR</button>
+          <button class="btn-danger" onclick="setMode(255)">OFF</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Debug Log</span>
+          <span class="value" style="cursor:pointer"
+            onclick="document.getElementById('log').innerHTML=''">[clear]</span>
+        </div>
+        <div id="log" class="log">Initializing...</div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================= OSRAM VIEW ========================= -->
+  <div class="view" id="osramView">
+    <div class="container">
+
+      <div class="card">
+        <div class="label"><span>Connection</span><span id="osramDevName" class="value">—</span></div>
+        <div class="grid-2">
+          <button id="osramConnectBtn" class="btn-primary" onclick="connect('osram')">CONNECT</button>
+          <button id="osramDisconnectBtn" class="btn-danger" onclick="disconnect()" disabled>DISCONNECT</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Live Preview · physical LED positions</span><span class="value">64 LEDs</span></div>
+        <div class="osram-preview-wrap">
+          <svg id="osramPreview" viewBox="0 0 800 180" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div style="font-size:0.62rem; color:var(--text-faint); margin-top:8px; text-align:center;">
+          Tap any LED to set its color individually
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Solid Color</span><span id="osramColorHex" class="value">#F0461C</span></div>
+        <canvas id="colorWheelOsram"></canvas>
+        <div class="color-readout">
+          <span id="osramRgbText">R: 240 G: 70 B: 28</span>
+          <div id="osramSwatch" class="swatch" style="background:#f0461c"></div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="grid-2 btn-secondary" onclick="osramFill()" style="flex:1; padding:10px;">FILL ALL</button>
+          <button class="grid-2 btn-secondary" onclick="clearAll()" style="flex:1; padding:10px;">CLEAR</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Global Brightness</span><span id="osramGccVal" class="value">0x40 (64/64)</span></div>
+        <input type="range" id="osramGccRange" min="0" max="64" value="64" oninput="onGccChange(this.value)">
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Built-in Effects</span><span class="value">Coordinate-based</span></div>
+        <div class="effect-grid">
+          <button class="effect-btn" data-mode="1" onclick="setMode(1)"><span class="num">01</span>LOGO 1</button>
+          <button class="effect-btn" data-mode="2" onclick="setMode(2)"><span class="num">02</span>LOGO 2</button>
+          <button class="effect-btn" data-mode="3" onclick="setMode(3)"><span class="num">03</span>LOGO 3</button>
+          <button class="effect-btn" data-mode="4" onclick="setMode(4)"><span class="num">04</span>AURORA</button>
+          <button class="effect-btn" data-mode="5" onclick="setMode(5)"><span class="num">05</span>OCEAN</button>
+          <button class="effect-btn" data-mode="6" onclick="setMode(6)"><span class="num">06</span>FLAME</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn-secondary" onclick="setMode(0)"
+            style="flex:1; padding:10px; background:linear-gradient(180deg,#1f1f1f,#161616); border:1px solid #2a2a2a; color:var(--text); border-radius:10px; font-size:0.78rem; letter-spacing:1px;">STATIC</button>
+          <button class="btn-danger" onclick="setMode(255)"
+            style="flex:1; padding:10px; border-radius:10px; font-size:0.78rem; letter-spacing:1px;">OFF</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Debug Log</span>
+          <span class="value" style="cursor:pointer"
+            onclick="document.getElementById('log').innerHTML=''">[clear]</span>
+        </div>
+        <div class="log" id="logOsramRef"></div>
+      </div>
+
+    </div>
+  </div>
+
 
   <script>
     /* ============================================================================
-       VIOLA BLE Controller (Web App)
-       For: Viola Matrix Display Driver Rev.2.1
+       Unified BLE LED Module Controller (v1.1 — for x64 LED Driver FW v3.0)
+       ----------------------------------------------------------------------------
+       Single-page app that hosts two modules:
+         - VIOLA (8×8 RGB matrix)
+         - OSRAM (64-LED letter panel)
     
-       BLE Service (Nordic UART-compatible):
-         Service : 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
-         RX (W)  : 6E400002-...   App  → ESP32
-         TX (N)  : 6E400003-...   ESP32 → App  (battery telemetry)
+       Both modules are driven by the SAME unified firmware ("x64 LED Driver"
+       FW v3.0) running on the SAME VIOLA Rev.2.1 driver board. The board has
+       no idea which LED panel is physically connected — the user tells the
+       firmware via the Web App, which sends [0x10][module] (0=VIOLA, 1=OSRAM)
+       right after the BLE link is established. The firmware boots in
+       MODULE_NONE state and rejects all draw commands (notifying 0xB1 0xE0)
+       until 0x10 is received.
     
-       Command set (App → ESP32, written to RX char):
-         [0x01][x][y][R][G][B]      Per-pixel update      (6 B)
-         [0x02]                     Clear all             (1 B)
-         [0x03][gcc]                Set GCC 0..0x40       (2 B)
-         [0x04][R][G][B]            Solid fill            (4 B)
-         [0x05][mode]               Built-in effect       (2 B)
-                                      0=static, 1=flame, 2=ocean, 3=pastel,
-                                      4=flower, 5=aurora, 255=off
-         [0x06][len][utf8 bytes]    Scrolling text        (2+N B)
+       Both modules use the same BLE Service UUID (Nordic UART-compatible).
+       The only meaningful protocol difference is the per-pixel command (0x01):
     
-       Notification (ESP32 → App, from TX char):
-         [0xB0][mv_hi][mv_lo]       Battery in millivolts (big-endian, 5s period)
+         VIOLA: [0x01][x][y][R][G][B]    (8×8 grid coords)
+         OSRAM: [0x01][idx][R][G][B]     (linear LED index 0..63)
+    
+       Notifications:
+         [0xB0][mv_hi][mv_lo]   battery telemetry, every 5 s
+         [0xB1][code]           fault — 0xE0 = NO_MODULE_SELECTED (auto-recovered)
+         [0xB2][module]         module-selection ACK
        ============================================================================ */
 
     const UART_SVC = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
@@ -399,43 +778,121 @@
 
     let device = null, server = null, rxChar = null, txChar = null;
     let connected = false;
+    let activeModule = null;   // 'viola' or 'osram'
     let currentColor = { r: 255, g: 94, b: 0 };
     let gcc = 32; // 0..64
 
     const $ = id => document.getElementById(id);
 
-    // ---------- Logging ----------
-    function log(msg, kind = '') {
-      const el = $('log');
-      const t = new Date().toLocaleTimeString();
-      const cls = kind ? ` class="${kind}"` : '';
-      el.innerHTML += `<div${cls}>[${t}] ${msg}</div>`;
-      el.scrollTop = el.scrollHeight;
+    // ============================================================================
+    // View management
+    // ============================================================================
+    function showLauncher() {
+      setView('launcher');
+      $('backBar').classList.remove('show');
+      $('moduleSubtitle').textContent = 'LED Module Controller';
+      $('statusBar').style.display = connected ? 'flex' : 'none';
+      // Stop any OSRAM preview animation when leaving the module
+      if (osramAnimRaf) {
+        cancelAnimationFrame(osramAnimRaf);
+        clearTimeout(osramAnimRaf);
+        osramAnimRaf = null;
+      }
+      // Don't disconnect; if user re-enters same module they're still connected
     }
 
-    // ---------- Status UI ----------
+    function setView(viewName) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      $(viewName + 'View').classList.add('active');
+    }
+
+    function enterViolaApp() {
+      activeModule = 'viola';
+      setView('viola');
+      $('backBar').classList.add('show');
+      $('modulePill').textContent = 'VIOLA · 8×8 Matrix';
+      $('moduleSubtitle').textContent = '8 × 8 MatrixArray Module';
+      $('statusBar').style.display = 'flex';
+      if (!connected) {
+        setStatus('', 'Disconnected — tap to connect');
+      }
+      // Initialize VIOLA-specific UI
+      initVIOLAWheel();
+    }
+
+    function enterOsramApp() {
+      activeModule = 'osram';
+      setView('osram');
+      $('backBar').classList.add('show');
+      $('modulePill').textContent = 'OSRAM · Logo';
+      $('moduleSubtitle').textContent = 'OSRAM Logo Module';
+      $('statusBar').style.display = 'flex';
+      if (!connected) {
+        setStatus('', 'Disconnected — tap to connect');
+      }
+      // Initialize OSRAM-specific UI
+      initOSRAMWheel();
+      renderOsramPreview();
+      // Default OSRAM color is brand orange
+      currentColor = { r: 240, g: 70, b: 28 };
+      updateOsramColorUI();
+    }
+
+    // ============================================================================
+    // Logging (shared across both modules)
+    // ============================================================================
+    function log(msg, kind = '') {
+      // Find whichever log element is currently visible
+      const elV = $('log');
+      const elO = $('logOsramRef');
+      const t = new Date().toLocaleTimeString();
+      const cls = kind ? ` class="${kind}"` : '';
+      const line = `<div${cls}>[${t}] ${msg}</div>`;
+      if (elV) { elV.innerHTML += line; elV.scrollTop = elV.scrollHeight; }
+      if (elO) { elO.innerHTML += line; elO.scrollTop = elO.scrollHeight; }
+    }
+
+    // ============================================================================
+    // Status UI (shared)
+    // ============================================================================
     function setStatus(state, text) {
       $('statusDot').className = 'dot ' + state;
       $('statusText').textContent = text;
-      $('connectBtn').disabled = (state === 'connecting' || state === 'connected');
-      $('disconnectBtn').disabled = (state !== 'connected');
+      // Update both module's connect/disconnect buttons
+      const violaConnect = $('violaConnectBtn');
+      const violaDisc = $('violaDisconnectBtn');
+      const osramConnect = $('osramConnectBtn');
+      const osramDisc = $('osramDisconnectBtn');
+      const isBusy = (state === 'connecting' || state === 'connected');
+      if (violaConnect) violaConnect.disabled = isBusy;
+      if (osramConnect) osramConnect.disabled = isBusy;
+      if (violaDisc) violaDisc.disabled = (state !== 'connected');
+      if (osramDisc) osramDisc.disabled = (state !== 'connected');
     }
 
-    // ---------- BLE: Connect ----------
-    async function connect() {
+    // ============================================================================
+    // BLE: Connect
+    // ============================================================================
+    async function connect(moduleType) {
       if (!navigator.bluetooth) {
         log('Web Bluetooth not supported (use Chrome / Edge)', 'err');
         setStatus('error', 'Web Bluetooth not supported');
         return;
       }
+      // Unified firmware v3.0: single BLE name "x64 LED Driver" handles both
+      // panels. Module is selected at runtime by sending [0x10][module] after
+      // connecting. moduleType ('viola' | 'osram') determines which 0x10 we send.
+      const devNamePrefix = 'x64 LED Driver';
+      const moduleByte = (moduleType === 'osram') ? 0x01 : 0x00;
       try {
-        setStatus('connecting', 'Scanning for devices...');
-        log('Requesting device...');
+        setStatus('connecting', `Scanning for ${devNamePrefix}...`);
+        log(`Requesting ${devNamePrefix} device for module=${moduleType}...`);
         device = await navigator.bluetooth.requestDevice({
-          filters: [{ namePrefix: 'VIOLA' }, { services: [UART_SVC] }],
+          filters: [{ namePrefix: devNamePrefix }, { services: [UART_SVC] }],
           optionalServices: [UART_SVC]
         });
-        $('devName').textContent = device.name || '(unnamed)';
+        const devNameEl = (moduleType === 'osram') ? $('osramDevName') : $('violaDevName');
+        if (devNameEl) devNameEl.textContent = device.name || '(unnamed)';
         log(`Found: ${device.name || '(unnamed)'}`);
         device.addEventListener('gattserverdisconnected', onDisconnected);
 
@@ -449,8 +906,16 @@
         txChar.addEventListener('characteristicvaluechanged', onNotify);
 
         connected = true;
-        setStatus('connected', 'Connected — VIOLA Rev.2.1');
+        setStatus('connected', `Connected — ${device.name || devNamePrefix}`);
         log('Connection established. Notifications subscribed.', 'ok');
+
+        // ★ Unified FW v3.0: send module selection (0x10) before any drawing
+        //    The FW boots in MODULE_NONE state and rejects all draw commands
+        //    until it receives [0x10][module]. The FW responds with [0xB2][module]
+        //    on success; we wait briefly so subsequent commands aren't racy.
+        await sendCmd([0x10, moduleByte]);
+        log(`Sent module-select 0x10 ${moduleByte === 0 ? 'VIOLA' : 'OSRAM'}`, 'ok');
+        await new Promise(r => setTimeout(r, 50));
 
         // Sync current GCC to FW
         await sendGcc(gcc);
@@ -471,27 +936,57 @@
       setStatus('', 'Disconnected');
       $('battReadout').textContent = '— V';
       $('battReadout').style.color = '#888';
-      $('devName').textContent = '—';
+      const dv = $('violaDevName'); if (dv) dv.textContent = '—';
+      const do_ = $('osramDevName'); if (do_) do_.textContent = '—';
       log('Disconnected from device', 'err');
     }
 
-    // ---------- BLE: Notification handler (battery telemetry) ----------
+    // ============================================================================
+    // BLE: Notifications (battery telemetry)
+    // ============================================================================
     function onNotify(ev) {
       const v = ev.target.value;
-      if (v.byteLength < 3) return;
+      if (v.byteLength < 2) return;
       const tag = v.getUint8(0);
-      if (tag === 0xB0) {
-        const mv = v.getUint16(1, false); // big-endian
+
+      // 0xB0 [mv_hi][mv_lo] — battery telemetry (3 bytes)
+      if (tag === 0xB0 && v.byteLength >= 3) {
+        const mv = v.getUint16(1, false);
         const volts = (mv / 1000).toFixed(2);
         $('battReadout').textContent = `${volts} V`;
         if (mv < 3400) $('battReadout').style.color = 'var(--danger)';
         else if (mv < 3700) $('battReadout').style.color = 'var(--warn)';
         else $('battReadout').style.color = 'var(--good)';
         log(`RX battery: ${mv} mV`, 'rx');
+        return;
+      }
+
+      // 0xB1 [fault] — fault notification (2 bytes)
+      if (tag === 0xB1 && v.byteLength >= 2) {
+        const code = v.getUint8(1);
+        if (code === 0xE0) {
+          log('RX fault 0xE0 NO_MODULE_SELECTED — sending 0x10 to recover', 'err');
+          // Auto-recover: re-send module selection based on activeModule
+          const recoveryByte = (activeModule === 'osram') ? 0x01 : 0x00;
+          sendCmd([0x10, recoveryByte]);
+        } else {
+          log(`RX fault 0x${code.toString(16).padStart(2, '0')}`, 'err');
+        }
+        return;
+      }
+
+      // 0xB2 [module] — module selection ACK (2 bytes)
+      if (tag === 0xB2 && v.byteLength >= 2) {
+        const module = v.getUint8(1);
+        const name = module === 0 ? 'VIOLA (8x8)' : module === 1 ? 'OSRAM (logo)' : 'unknown';
+        log(`RX module ACK: ${name}`, 'ok');
+        return;
       }
     }
 
-    // ---------- BLE: Send wrapper ----------
+    // ============================================================================
+    // BLE: Command wrapper
+    // ============================================================================
     async function sendCmd(bytes) {
       if (!connected || !rxChar) {
         log('Not connected — cannot send', 'err');
@@ -508,11 +1003,27 @@
       }
     }
 
-    // ---------- High-level commands ----------
+    // ============================================================================
+    // High-level commands (shared signature; protocol 0x01 differs per module)
+    // ============================================================================
     async function clearAll() { await sendCmd([0x02]); }
     async function sendGcc(g) { await sendCmd([0x03, g & 0x7F]); }
     async function sendSolid(r, g, b) { await sendCmd([0x04, r & 0xff, g & 0xff, b & 0xff]); }
-    async function setMode(modeId) { await sendCmd([0x05, modeId & 0xff]); }
+    async function setMode(modeId) {
+      // Send BLE command if connected (silent failure otherwise — preview still runs)
+      if (connected && rxChar) {
+        await sendCmd([0x05, modeId & 0xff]);
+      } else if (activeModule === 'osram') {
+        log(`Preview only (not connected): mode ${modeId}`, 'tx');
+      }
+      // Update OSRAM effect button state if in OSRAM view, and start/stop preview
+      if (activeModule === 'osram') {
+        document.querySelectorAll('#osramView .effect-btn').forEach(b => {
+          b.classList.toggle('active', parseInt(b.dataset.mode) === modeId);
+        });
+        startOsramPreviewAnimation(modeId);
+      }
+    }
 
     async function sendText() {
       const txt = $('scrollText').value;
@@ -523,114 +1034,212 @@
       await sendCmd([0x06, utf8.length, ...utf8]);
     }
 
-    // ---------- GCC slider ----------
+    // VIOLA per-pixel: [0x01][x][y][R][G][B]
+    async function sendVIOLAPixel(x, y, r, g, b) {
+      await sendCmd([0x01, x & 7, y & 7, r & 0xff, g & 0xff, b & 0xff]);
+    }
+
+    // OSRAM per-pixel: [0x01][idx][R][G][B]
+    async function sendOSRAMPixel(idx, r, g, b) {
+      await sendCmd([0x01, idx & 0xff, r & 0xff, g & 0xff, b & 0xff]);
+    }
+
+    async function osramFill() {
+      await sendSolid(currentColor.r, currentColor.g, currentColor.b);
+    }
+
+    // ============================================================================
+    // GCC slider (works for either module)
+    // ============================================================================
     function onGccChange(v) {
       gcc = parseInt(v, 10);
-      $('gccVal').textContent = `0x${gcc.toString(16).padStart(2, '0').toUpperCase()} (${gcc}/64)`;
+      const hex = `0x${gcc.toString(16).padStart(2, '0').toUpperCase()} (${gcc}/64)`;
+      if ($('gccVal')) $('gccVal').textContent = hex;
+      if ($('osramGccVal')) $('osramGccVal').textContent = hex;
       if (connected) sendGcc(gcc);
     }
 
-    // ---------- Color Wheel (circular HSV picker) ----------
-    //
-    // Layout:
-    //   - Polar coordinates: angle = hue (0..360°), radius = saturation (0..1)
-    //   - Center is white (s=0), outer edge is fully saturated (s=1)
-    //   - Value (brightness) is fixed at 1.0 here; LED brightness is set by
-    //     the GCC slider, which is the right semantic for an LED panel.
-    //
-    // Out-of-circle behavior:
-    //   When the user's finger drifts outside the circle while dragging,
-    //   pickColor() returns early without updating currentColor or sending
-    //   a new BLE command. This means the panel keeps the last in-circle
-    //   color until either (a) the finger returns inside the circle, or
-    //   (b) a fresh tap inside the circle starts a new pick.
-    //
-    // Performance:
-    //   Per-pixel HSV rasterization (~90 ms at 300×300 px) is expensive.
-    //   We render it once into an offscreen canvas and just blit + redraw
-    //   the indicator on every pick — that is fast enough for smooth drag.
-    const wheel = $('colorWheel');
-    const wheelCache = document.createElement('canvas');  // offscreen base layer
-    let wheelDpr = 1;
-    let wheelGeom = { cx: 0, cy: 0, r: 0 };            // CSS-pixel center & radius
-    let lastPickCss = null;                              // last in-circle pick (for indicator)
+    // ============================================================================
+    // Color Wheel — VIOLA (circular HSV picker)
+    // ============================================================================
+    let violaWheel = null;
+    let violaWheelCache = null;
+    let violaWheelGeom = { cx: 0, cy: 0, r: 0 };
+    let violaWheelDpr = 1;
+    let violaLastPickCss = null;
+    let violaWheelInitialized = false;
 
-    // Render the base color wheel once into the offscreen canvas.
-    // Called on load and on resize, never during interaction.
-    function rasterizeBaseWheel() {
-      wheelDpr = window.devicePixelRatio || 1;
-      const w = wheel.clientWidth, h = wheel.clientHeight;
+    function initVIOLAWheel() {
+      if (violaWheelInitialized) return;
+      violaWheel = $('colorWheel');
+      violaWheelCache = document.createElement('canvas');
+      rasterizeBaseWheel(violaWheel, violaWheelCache, 'viola');
+      violaWheel.addEventListener('pointerdown', onVIOLAWheelDown);
+      violaWheel.addEventListener('pointermove', onVIOLAWheelMove);
+      violaWheel.addEventListener('pointerup', onVIOLAWheelUp);
+      violaWheel.addEventListener('pointercancel', () => { violaDragging = false; });
+      violaWheelInitialized = true;
+    }
 
-      // Size both canvases (visible + offscreen cache) to DPR-scaled pixels
-      wheel.width = w * wheelDpr;
-      wheel.height = h * wheelDpr;
-      wheelCache.width = w * wheelDpr;
-      wheelCache.height = h * wheelDpr;
+    let violaDragging = false;
+    function onVIOLAWheelDown(e) {
+      violaDragging = true;
+      violaWheel.setPointerCapture(e.pointerId);
+      pickViolaColor(e);
+    }
+    function onVIOLAWheelMove(e) { if (violaDragging) pickViolaColor(e); }
+    function onVIOLAWheelUp(e) {
+      violaDragging = false;
+      try { violaWheel.releasePointerCapture(e.pointerId); } catch { }
+    }
 
+    function pickViolaColor(ev) {
+      const rect = violaWheel.getBoundingClientRect();
+      const x = (ev.clientX !== undefined ? ev.clientX : ev.touches[0].clientX) - rect.left;
+      const y = (ev.clientY !== undefined ? ev.clientY : ev.touches[0].clientY) - rect.top;
+      const dx = x - violaWheelGeom.cx;
+      const dy = y - violaWheelGeom.cy;
+      if (Math.sqrt(dx * dx + dy * dy) > violaWheelGeom.r) return;
+      const cctx = violaWheelCache.getContext('2d');
+      const px = cctx.getImageData(
+        Math.floor(x * violaWheelDpr),
+        Math.floor(y * violaWheelDpr),
+        1, 1
+      ).data;
+      currentColor = { r: px[0], g: px[1], b: px[2] };
+      violaLastPickCss = { x, y };
+      updateViolaColorUI();
+      sendSolid(px[0], px[1], px[2]);
+      drawWheelOverlay(violaWheel, violaWheelCache, violaWheelDpr, violaLastPickCss);
+    }
+
+    function updateViolaColorUI() {
+      const { r, g, b } = currentColor;
+      const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+      $('colorHex').textContent = hex;
+      $('rgbText').textContent = `R: ${r}  G: ${g}  B: ${b}`;
+      $('swatch').style.background = hex;
+    }
+
+    // ============================================================================
+    // Color Wheel — OSRAM (same picker, separate state to allow independent setup)
+    // ============================================================================
+    let osramWheel = null;
+    let osramWheelCache = null;
+    let osramWheelGeom = { cx: 0, cy: 0, r: 0 };
+    let osramWheelDpr = 1;
+    let osramLastPickCss = null;
+    let osramWheelInitialized = false;
+
+    function initOSRAMWheel() {
+      if (osramWheelInitialized) return;
+      osramWheel = $('colorWheelOsram');
+      osramWheelCache = document.createElement('canvas');
+      rasterizeBaseWheel(osramWheel, osramWheelCache, 'osram');
+      osramWheel.addEventListener('pointerdown', onOsramWheelDown);
+      osramWheel.addEventListener('pointermove', onOsramWheelMove);
+      osramWheel.addEventListener('pointerup', onOsramWheelUp);
+      osramWheel.addEventListener('pointercancel', () => { osramDragging = false; });
+      osramWheelInitialized = true;
+    }
+
+    let osramDragging = false;
+    function onOsramWheelDown(e) {
+      osramDragging = true;
+      osramWheel.setPointerCapture(e.pointerId);
+      pickOsramColor(e);
+    }
+    function onOsramWheelMove(e) { if (osramDragging) pickOsramColor(e); }
+    function onOsramWheelUp(e) {
+      osramDragging = false;
+      try { osramWheel.releasePointerCapture(e.pointerId); } catch { }
+    }
+
+    function pickOsramColor(ev) {
+      const rect = osramWheel.getBoundingClientRect();
+      const x = (ev.clientX !== undefined ? ev.clientX : ev.touches[0].clientX) - rect.left;
+      const y = (ev.clientY !== undefined ? ev.clientY : ev.touches[0].clientY) - rect.top;
+      const dx = x - osramWheelGeom.cx;
+      const dy = y - osramWheelGeom.cy;
+      if (Math.sqrt(dx * dx + dy * dy) > osramWheelGeom.r) return;
+      const cctx = osramWheelCache.getContext('2d');
+      const px = cctx.getImageData(
+        Math.floor(x * osramWheelDpr),
+        Math.floor(y * osramWheelDpr),
+        1, 1
+      ).data;
+      currentColor = { r: px[0], g: px[1], b: px[2] };
+      osramLastPickCss = { x, y };
+      updateOsramColorUI();
+      drawWheelOverlay(osramWheel, osramWheelCache, osramWheelDpr, osramLastPickCss);
+      // Note: OSRAM does NOT auto-fill on color pick; user must press FILL ALL.
+      // This is because tapping individual LEDs in the preview is the primary
+      // way to use color, and accidental wheel touches shouldn't overwrite.
+    }
+
+    function updateOsramColorUI() {
+      const { r, g, b } = currentColor;
+      const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+      $('osramColorHex').textContent = hex;
+      $('osramRgbText').textContent = `R: ${r}  G: ${g}  B: ${b}`;
+      $('osramSwatch').style.background = hex;
+    }
+
+    // ============================================================================
+    // Wheel rendering (shared helpers)
+    // ============================================================================
+    function rasterizeBaseWheel(canvas, cache, which) {
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      cache.width = w * dpr;
+      cache.height = h * dpr;
       const cx = w / 2, cy = h / 2;
-      const r = Math.min(cx, cy) - 1;     // 1 px inset to avoid edge clipping
-      wheelGeom = { cx, cy, r };
-
-      // Per-pixel HSV → RGB rasterization into the cache
-      const cctx = wheelCache.getContext('2d');
-      const W = wheelCache.width, H = wheelCache.height;
+      const r = Math.min(cx, cy) - 1;
+      const geom = { cx, cy, r };
+      if (which === 'viola') { violaWheelGeom = geom; violaWheelDpr = dpr; }
+      else { osramWheelGeom = geom; osramWheelDpr = dpr; }
+      const cctx = cache.getContext('2d');
+      const W = cache.width, H = cache.height;
       const img = cctx.createImageData(W, H);
       const data = img.data;
-      const dpr = wheelDpr;
       const cxp = cx * dpr, cyp = cy * dpr, rp = r * dpr;
-
       for (let py = 0; py < H; py++) {
         for (let px = 0; px < W; px++) {
           const dx = px - cxp;
           const dy = py - cyp;
           const dist = Math.sqrt(dx * dx + dy * dy);
           const i = (py * W + px) * 4;
-          if (dist > rp) {
-            data[i + 3] = 0;                          // outside circle = transparent
-            continue;
-          }
-          let ang = Math.atan2(dy, dx);                // -π..π
-          if (ang < 0) ang += Math.PI * 2;             // 0..2π
-          const hue = (ang * 180) / Math.PI;           // 0..360
-          const sat = Math.min(1, dist / rp);          // 0..1
+          if (dist > rp) { data[i + 3] = 0; continue; }
+          let ang = Math.atan2(dy, dx);
+          if (ang < 0) ang += Math.PI * 2;
+          const hue = (ang * 180) / Math.PI;
+          const sat = Math.min(1, dist / rp);
           const [r8, g8, b8] = hsvToRgb(hue, sat, 1);
-          data[i] = r8;
-          data[i + 1] = g8;
-          data[i + 2] = b8;
-          data[i + 3] = 255;
+          data[i] = r8; data[i + 1] = g8; data[i + 2] = b8; data[i + 3] = 255;
         }
       }
       cctx.putImageData(img, 0, 0);
-
-      // Draw the visible canvas (cache + indicator)
-      drawWheel();
+      drawWheelOverlay(canvas, cache, dpr, null);
     }
 
-    // Composite the cached wheel onto the visible canvas, plus the indicator.
-    // Called every time the picked position changes — needs to be fast.
-    function drawWheel() {
-      const ctx = wheel.getContext('2d');
-      ctx.setTransform(1, 0, 0, 1, 0, 0);             // identity, work in device px
-      ctx.clearRect(0, 0, wheel.width, wheel.height);
-      ctx.drawImage(wheelCache, 0, 0);
-
-      // Indicator (drawn in CSS px space, so re-apply DPR scale)
-      if (lastPickCss) {
-        ctx.setTransform(wheelDpr, 0, 0, wheelDpr, 0, 0);
+    function drawWheelOverlay(canvas, cache, dpr, pickCss) {
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(cache, 0, 0);
+      if (pickCss) {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.beginPath();
-        ctx.arc(lastPickCss.x, lastPickCss.y, 7, 0, Math.PI * 2);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#000';
-        ctx.stroke();
+        ctx.arc(pickCss.x, pickCss.y, 7, 0, Math.PI * 2);
+        ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.stroke();
         ctx.beginPath();
-        ctx.arc(lastPickCss.x, lastPickCss.y, 7, 0, Math.PI * 2);
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = '#fff';
-        ctx.stroke();
+        ctx.arc(pickCss.x, pickCss.y, 7, 0, Math.PI * 2);
+        ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
       }
     }
 
-    // HSV to RGB — h in [0,360), s/v in [0,1]. Returns [r,g,b] in [0,255].
     function hsvToRgb(h, s, v) {
       const c = v * s;
       const hh = (h / 60) % 6;
@@ -650,70 +1259,384 @@
       ];
     }
 
-    function pickColor(ev) {
-      const rect = wheel.getBoundingClientRect();
-      const x = (ev.clientX !== undefined ? ev.clientX : ev.touches[0].clientX) - rect.left;
-      const y = (ev.clientY !== undefined ? ev.clientY : ev.touches[0].clientY) - rect.top;
+    // ============================================================================
+    // OSRAM live preview — physical LED positions (tap to set per-LED color)
+    // ============================================================================
+    const OSRAM_LEDS = [{ "i": 0, "x": 15.55, "y": 38.36, "L": "O", "sw": 0, "cs": 0 }, { "i": 1, "x": 23.71, "y": 38.36, "L": "O", "sw": 0, "cs": 1 }, { "i": 2, "x": 8.73, "y": 33.35, "L": "O", "sw": 0, "cs": 2 }, { "i": 3, "x": 5.26, "y": 25.61, "L": "O", "sw": 0, "cs": 3 }, { "i": 4, "x": 5.23, "y": 17.12, "L": "O", "sw": 0, "cs": 4 }, { "i": 5, "x": 8.65, "y": 9.36, "L": "O", "sw": 0, "cs": 5 }, { "i": 6, "x": 15.43, "y": 4.3, "L": "O", "sw": 0, "cs": 6 }, { "i": 7, "x": 23.83, "y": 4.3, "L": "O", "sw": 0, "cs": 7 }, { "i": 8, "x": 48.06, "y": 34.6, "L": "S", "sw": 1, "cs": 0 }, { "i": 9, "x": 48.08, "y": 26.47, "L": "S", "sw": 1, "cs": 1 }, { "i": 10, "x": 34.0, "y": 25.61, "L": "O", "sw": 1, "cs": 2 }, { "i": 11, "x": 30.53, "y": 33.35, "L": "O", "sw": 1, "cs": 3 }, { "i": 12, "x": 34.03, "y": 17.12, "L": "O", "sw": 1, "cs": 4 }, { "i": 13, "x": 30.62, "y": 9.36, "L": "O", "sw": 1, "cs": 5 }, { "i": 14, "x": 47.01, "y": 10.77, "L": "S", "sw": 1, "cs": 6 }, { "i": 15, "x": 52.72, "y": 5.02, "L": "S", "sw": 1, "cs": 7 }, { "i": 16, "x": 54.84, "y": 39.18, "L": "S", "sw": 2, "cs": 0 }, { "i": 17, "x": 63.05, "y": 38.6, "L": "S", "sw": 2, "cs": 1 }, { "i": 18, "x": 69.04, "y": 33.15, "L": "S", "sw": 2, "cs": 2 }, { "i": 19, "x": 63.86, "y": 20.81, "L": "S", "sw": 2, "cs": 3 }, { "i": 20, "x": 69.73, "y": 15.23, "L": "S", "sw": 2, "cs": 4 }, { "i": 21, "x": 68.25, "y": 7.44, "L": "S", "sw": 2, "cs": 5 }, { "i": 22, "x": 60.86, "y": 3.99, "L": "S", "sw": 2, "cs": 6 }, { "i": 23, "x": 55.74, "y": 23.06, "L": "S", "sw": 2, "cs": 7 }, { "i": 24, "x": 91.99, "y": 37.6, "L": "R", "sw": 3, "cs": 0 }, { "i": 25, "x": 83.53, "y": 37.54, "L": "R", "sw": 3, "cs": 1 }, { "i": 26, "x": 83.53, "y": 29.52, "L": "R", "sw": 3, "cs": 2 }, { "i": 27, "x": 83.53, "y": 21.83, "L": "R", "sw": 3, "cs": 3 }, { "i": 28, "x": 88.2, "y": 18.78, "L": "R", "sw": 3, "cs": 4 }, { "i": 29, "x": 83.53, "y": 14.28, "L": "R", "sw": 3, "cs": 5 }, { "i": 30, "x": 83.53, "y": 6.28, "L": "R", "sw": 3, "cs": 6 }, { "i": 31, "x": 97.68, "y": 18.79, "L": "R", "sw": 3, "cs": 7 }, { "i": 32, "x": 100.58, "y": 37.52, "L": "R", "sw": 4, "cs": 0 }, { "i": 33, "x": 106.43, "y": 31.34, "L": "R", "sw": 4, "cs": 1 }, { "i": 34, "x": 105.46, "y": 22.71, "L": "R", "sw": 4, "cs": 2 }, { "i": 35, "x": 100.61, "y": 12.06, "L": "R", "sw": 4, "cs": 3 }, { "i": 36, "x": 103.98, "y": 4.88, "L": "R", "sw": 4, "cs": 4 }, { "i": 37, "x": 117.74, "y": 6.01, "L": "A", "sw": 4, "cs": 5 }, { "i": 38, "x": 120.65, "y": 14.0, "L": "A", "sw": 4, "cs": 6 }, { "i": 39, "x": 123.56, "y": 21.97, "L": "A", "sw": 4, "cs": 7 }, { "i": 40, "x": 131.89, "y": 36.9, "L": "A", "sw": 5, "cs": 0 }, { "i": 41, "x": 136.76, "y": 29.96, "L": "A", "sw": 5, "cs": 1 }, { "i": 42, "x": 139.67, "y": 21.97, "L": "A", "sw": 5, "cs": 2 }, { "i": 43, "x": 142.58, "y": 14.0, "L": "A", "sw": 5, "cs": 3 }, { "i": 44, "x": 135.62, "y": 13.17, "L": "A", "sw": 5, "cs": 4 }, { "i": 45, "x": 127.62, "y": 13.17, "L": "A", "sw": 5, "cs": 5 }, { "i": 46, "x": 126.48, "y": 29.96, "L": "A", "sw": 5, "cs": 6 }, { "i": 47, "x": 145.5, "y": 6.01, "L": "A", "sw": 5, "cs": 7 }, { "i": 48, "x": 158.67, "y": 37.49, "L": "M", "sw": 6, "cs": 0 }, { "i": 49, "x": 162.9, "y": 33.68, "L": "M", "sw": 6, "cs": 1 }, { "i": 50, "x": 158.69, "y": 29.9, "L": "M", "sw": 6, "cs": 2 }, { "i": 51, "x": 158.69, "y": 21.83, "L": "M", "sw": 6, "cs": 3 }, { "i": 52, "x": 158.69, "y": 14.26, "L": "M", "sw": 6, "cs": 4 }, { "i": 53, "x": 158.69, "y": 6.23, "L": "M", "sw": 6, "cs": 5 }, { "i": 54, "x": 173.36, "y": 21.14, "L": "M", "sw": 6, "cs": 6 }, { "i": 55, "x": 167.3, "y": 26.54, "L": "M", "sw": 6, "cs": 7 }, { "i": 56, "x": 188.59, "y": 37.49, "L": "M", "sw": 7, "cs": 0 }, { "i": 57, "x": 184.38, "y": 33.68, "L": "M", "sw": 7, "cs": 1 }, { "i": 58, "x": 188.59, "y": 29.9, "L": "M", "sw": 7, "cs": 2 }, { "i": 59, "x": 188.59, "y": 21.83, "L": "M", "sw": 7, "cs": 3 }, { "i": 60, "x": 188.59, "y": 14.26, "L": "M", "sw": 7, "cs": 4 }, { "i": 61, "x": 188.59, "y": 6.23, "L": "M", "sw": 7, "cs": 5 }, { "i": 62, "x": 173.52, "y": 13.33, "L": "M", "sw": 7, "cs": 6 }, { "i": 63, "x": 179.98, "y": 26.54, "L": "M", "sw": 7, "cs": 7 }];
 
-      const dx = x - wheelGeom.cx;
-      const dy = y - wheelGeom.cy;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+    const OSRAM_XMIN = 5.23, OSRAM_XMAX = 188.59;
+    const OSRAM_YMIN = 3.99, OSRAM_YMAX = 39.18;
+    const OSRAM_W = OSRAM_XMAX - OSRAM_XMIN;
+    const OSRAM_H = OSRAM_YMAX - OSRAM_YMIN;
+    const osramFb = OSRAM_LEDS.map(() => ({ r: 0, g: 0, b: 0 }));
 
-      // Out of circle → DO NOT change color. Keeps the last in-circle pick
-      // active until the finger comes back inside or a new tap occurs.
-      if (dist > wheelGeom.r) return;
+    function renderOsramPreview() {
+      const svg = $('osramPreview');
+      const SVG_W = 800, SVG_H = 180, MARGIN = 22;
+      const SCALE = (SVG_W - 2 * MARGIN) / OSRAM_W;
+      const sx = x => MARGIN + (x - OSRAM_XMIN) * SCALE;
+      const sy = y => SVG_H - MARGIN - (y - OSRAM_YMIN) * SCALE;
+      const R = 9;
 
-      // Read color from cached pixel (much cheaper than from the live canvas
-      // if we'd overdrawn it with the indicator).
-      const cctx = wheelCache.getContext('2d');
-      const px = cctx.getImageData(
-        Math.floor(x * wheelDpr),
-        Math.floor(y * wheelDpr),
-        1, 1
-      ).data;
+      let html = `<defs>
+    <filter id="osramGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`;
 
-      currentColor = { r: px[0], g: px[1], b: px[2] };
-      lastPickCss = { x, y };
-      updateColorUI();
-      sendSolid(px[0], px[1], px[2]);
-      drawWheel();    // cheap: just blit + indicator
+      for (const led of OSRAM_LEDS) {
+        const { r, g, b } = osramFb[led.i];
+        const isOff = r + g + b < 12;
+        const color = isOff ? '#1a1a24' : `rgb(${r},${g},${b})`;
+        const filter = !isOff ? 'filter="url(#osramGlow)"' : '';
+        html += `<circle cx="${sx(led.x).toFixed(1)}" cy="${sy(led.y).toFixed(1)}" r="${R}" fill="${color}" stroke="#fff" stroke-width="0.5" stroke-opacity="${isOff ? 0.1 : 0.35}" ${filter} data-i="${led.i}" style="cursor:pointer;"/>`;
+      }
+      svg.innerHTML = html;
+      svg.querySelectorAll('circle').forEach(c => {
+        c.addEventListener('click', () => {
+          const i = parseInt(c.dataset.i);
+          const { r, g, b } = currentColor;
+          osramFb[i] = { r, g, b };
+          sendOSRAMPixel(i, r, g, b);
+          renderOsramPreview();
+        });
+      });
     }
 
-    function updateColorUI() {
-      const { r, g, b } = currentColor;
-      const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
-      $('colorHex').textContent = hex;
-      $('rgbText').textContent = `R: ${r}  G: ${g}  B: ${b}`;
-      $('swatch').style.background = hex;
+    // ============================================================================
+    // OSRAM live preview animation engine
+    // ----------------------------------------------------------------------------
+    // Mirrors the firmware's coordinate-based effect renderer so the user can
+    // preview each effect locally — works even when BLE is disconnected. The
+    // math is the same; the only differences are:
+    //   - Frame rate is capped at ~30 fps for battery friendliness in the browser
+    //   - Gamma 2.2 is applied at display time (firmware does it via LUT in flush)
+    // ============================================================================
+
+    // Normalized LED coordinates (added once at startup for fast inner-loop access)
+    OSRAM_LEDS.forEach(led => {
+      led.xn = (led.x - OSRAM_XMIN) / OSRAM_W;
+      led.yn = (led.y - OSRAM_YMIN) / OSRAM_H;
+    });
+
+    // Letter group metadata for Logo 1 (Meteor)
+    const LETTER_GROUPS = { O: [], S: [], R: [], A: [], M: [] };
+    OSRAM_LEDS.forEach(l => LETTER_GROUPS[l.L].push(l));
+    // Derive per-letter normalized stroke order (0..1 within each letter)
+    // Note: source data has no .s field anymore — we approximate stroke order
+    // from xn/yn using a simple "start top-left, walk around" heuristic.
+    // In practice this gives a pleasant meteor-trace path.
+    for (const L in LETTER_GROUPS) {
+      const arr = LETTER_GROUPS[L];
+      // Sort by an angular sweep around the letter centroid + radius
+      const cx = arr.reduce((s, p) => s + p.x, 0) / arr.length;
+      const cy = arr.reduce((s, p) => s + p.y, 0) / arr.length;
+      arr.forEach(p => {
+        p._ang = Math.atan2(p.y - cy, p.x - cx);
+        p._r = Math.sqrt((p.x - cx) ** 2 + (p.y - cy) ** 2);
+      });
+      arr.sort((a, b) => a._ang - b._ang);
+      arr.forEach((p, i) => { p.sNorm = arr.length > 1 ? i / (arr.length - 1) : 0; });
     }
 
-    let wheelDragging = false;
-    wheel.addEventListener('pointerdown', e => {
-      wheelDragging = true;
-      wheel.setPointerCapture(e.pointerId);
-      pickColor(e);
-    });
-    wheel.addEventListener('pointermove', e => {
-      if (wheelDragging) pickColor(e);
-    });
-    wheel.addEventListener('pointerup', e => {
-      wheelDragging = false;
-      try { wheel.releasePointerCapture(e.pointerId); } catch { }
-    });
-    wheel.addEventListener('pointercancel', () => { wheelDragging = false; });
+    const COLOR_ORANGE_F = [240 / 255, 70 / 255, 28 / 255];
+    const COLOR_WHITE_HOT = [1.0, 0.98, 0.92];
+    const COLOR_WHITE_COOL = [0.85, 0.92, 1.0];
 
-    // ---------- Init ----------
+    // Perlin noise (deterministic permutation, seed 0xC0FFEE12 — matches FW)
+    const perlinPerm = new Uint8Array(512);
+    (function () {
+      const p = new Uint8Array(256);
+      for (let i = 0; i < 256; i++) p[i] = i;
+      let s = 0xC0FFEE12;
+      for (let i = 255; i > 0; i--) {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        const j = s % (i + 1);
+        [p[i], p[j]] = [p[j], p[i]];
+      }
+      for (let i = 0; i < 512; i++) perlinPerm[i] = p[i & 255];
+    })();
+    function _fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+    function _lerp(t, a, b) { return a + t * (b - a); }
+    function _grad(h, x, y, z) {
+      const g = h & 15;
+      const u = g < 8 ? x : y;
+      const v = g < 4 ? y : (g === 12 || g === 14) ? x : z;
+      return ((g & 1) === 0 ? u : -u) + ((g & 2) === 0 ? v : -v);
+    }
+    function perlin(x, y, z) {
+      z = z || 0;
+      const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+      x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+      const u = _fade(x), v = _fade(y), w = _fade(z);
+      const A = perlinPerm[X] + Y, AA = perlinPerm[A] + Z, AB = perlinPerm[A + 1] + Z;
+      const B = perlinPerm[X + 1] + Y, BA = perlinPerm[B] + Z, BB = perlinPerm[B + 1] + Z;
+      return _lerp(w,
+        _lerp(v, _lerp(u, _grad(perlinPerm[AA], x, y, z), _grad(perlinPerm[BA], x - 1, y, z)),
+          _lerp(u, _grad(perlinPerm[AB], x, y - 1, z), _grad(perlinPerm[BB], x - 1, y - 1, z))),
+        _lerp(v, _lerp(u, _grad(perlinPerm[AA + 1], x, y, z - 1), _grad(perlinPerm[BA + 1], x - 1, y, z - 1)),
+          _lerp(u, _grad(perlinPerm[AB + 1], x, y - 1, z - 1), _grad(perlinPerm[BB + 1], x - 1, y - 1, z - 1))));
+    }
+
+    function _smoothstep(e0, e1, x) {
+      const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+      return t * t * (3 - 2 * t);
+    }
+    function _lerpColor(a, b, t) {
+      return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+    }
+    function _hsv2rgbF(h, s, v) {
+      const c = v * s, hh = (h / 60) % 6;
+      const x = c * (1 - Math.abs(hh % 2 - 1));
+      let r = 0, g = 0, b = 0;
+      if (hh < 1) { r = c; g = x; }
+      else if (hh < 2) { r = x; g = c; }
+      else if (hh < 3) { g = c; b = x; }
+      else if (hh < 4) { g = x; b = c; }
+      else if (hh < 5) { r = x; b = c; }
+      else { r = c; b = x; }
+      const m = v - c;
+      return [r + m, g + m, b + m];
+    }
+
+    // Compute color for a single LED for a given mode and time (in seconds).
+    // Returns linear [r, g, b] in 0..1.
+    function osramComputeColor(led, mode, t) {
+      const xn = led.xn, yn = led.yn;
+      const x8 = xn * 8, y8 = yn * 8;
+
+      if (mode === 1) {
+        // Logo 1: Meteor → Orange Logo (8.3s cycle)
+        const PERIOD = 8.33;
+        const tn = (t % PERIOD) / PERIOD;
+        const sLocal = led.sNorm;
+        const STREAK_END = 0.55;
+        const HOLD_BEGIN = 0.62;
+        const FADE_BEGIN = 0.92;
+
+        let streakHead = 0, streakTail = 0, isHead = false;
+        if (tn <= STREAK_END) {
+          const headPos = tn / STREAK_END;
+          const HEAD_WIDTH = 0.10, TAIL = 0.42;
+          const dist = headPos - sLocal;
+          if (dist >= -0.05 && dist < TAIL) {
+            streakHead = Math.exp(-(dist / HEAD_WIDTH) * (dist / HEAD_WIDTH));
+            streakTail = Math.max(0, 1 - dist / TAIL) * 0.5;
+            if (dist < 0) {
+              streakHead *= Math.max(0, 1 + dist / 0.05);
+              streakTail *= Math.max(0, 1 + dist / 0.05);
+            }
+            isHead = streakHead > streakTail * 0.8 && streakHead > 0.15;
+          }
+        }
+        const streakI = Math.max(streakHead, streakTail);
+
+        let revealLevel = 0;
+        const localFillStart = STREAK_END * Math.max(0, sLocal - 0.05);
+        if (tn > localFillStart && tn < HOLD_BEGIN) {
+          revealLevel = _smoothstep(localFillStart, HOLD_BEGIN, tn) * 0.5;
+        } else if (tn >= HOLD_BEGIN && tn < FADE_BEGIN) {
+          revealLevel = 0.5 + _smoothstep(HOLD_BEGIN, 0.85, tn) * 0.5;
+        } else if (tn >= FADE_BEGIN) {
+          revealLevel = 1.0 * (1 - _smoothstep(FADE_BEGIN, 1.0, tn));
+        }
+
+        let r = 0, g = 0, b = 0;
+        if (streakI > 0.001) {
+          const sc = isHead
+            ? _lerpColor(COLOR_WHITE_HOT, COLOR_WHITE_COOL, streakHead)
+            : COLOR_WHITE_HOT;
+          r += sc[0] * streakI; g += sc[1] * streakI; b += sc[2] * streakI;
+        }
+        if (revealLevel > 0.001) {
+          const t2 = _smoothstep(0, 0.85, revealLevel);
+          const rc = _lerpColor(COLOR_WHITE_HOT, COLOR_ORANGE_F, t2);
+          r += rc[0] * revealLevel; g += rc[1] * revealLevel; b += rc[2] * revealLevel;
+        }
+        return [Math.min(1, r), Math.min(1, g), Math.min(1, b)];
+      }
+
+      if (mode === 2) {
+        // Logo 2: Warm-up (12s cycle, multi-color temperature ramp)
+        const PERIOD = 12.0;
+        const tn = (t % PERIOD) / PERIOD;
+        if (tn > 0.75) return COLOR_ORANGE_F.slice();
+        const rampT = tn / 0.75;
+        const localOffset = led.xn * 0.08 + Math.sin(led.i * 0.5) * 0.03;
+        const rampLocal = Math.max(0, Math.min(1, rampT + localOffset - 0.04));
+
+        let hue, sat, val;
+        if (rampLocal < 0.15) {
+          const k = rampLocal / 0.15;
+          hue = 270 - k * 30; sat = 0.65 + k * 0.25; val = k * 0.35;
+        } else if (rampLocal < 0.40) {
+          const k = (rampLocal - 0.15) / 0.25;
+          hue = 240 - k * 60; sat = 0.90; val = 0.35 + k * 0.30;
+        } else if (rampLocal < 0.65) {
+          const k = (rampLocal - 0.40) / 0.25;
+          hue = 180 - k * 120; sat = 0.90 - k * 0.05; val = 0.65 + k * 0.20;
+        } else if (rampLocal < 0.90) {
+          const k = (rampLocal - 0.65) / 0.25;
+          hue = 60 - k * 48; sat = 0.85 + k * 0.03; val = 0.85 + k * 0.09;
+        } else {
+          hue = 12; sat = 0.88; val = 0.94;
+        }
+        const flicker = rampLocal < 0.55
+          ? (Math.sin(t * 11 + led.i * 0.7) * 0.5 + 0.5) * 0.08 * (1 - rampLocal * 1.8)
+          : 0;
+        val = Math.max(0, Math.min(1, val + flicker));
+        return _hsv2rgbF(hue, sat, val);
+      }
+
+      if (mode === 3) {
+        // Logo 3: Reveal (9s cycle, rainbow-edge curtain, then orange)
+        const PERIOD = 9.0;
+        const tn = (t % PERIOD) / PERIOD;
+        const SWEEP_END = 0.45, HOLD_END = 0.92;
+
+        if (tn > HOLD_END) {
+          const k = (tn - HOLD_END) / (1.0 - HOLD_END);
+          const fade = 1 - _smoothstep(0, 1, k);
+          return [COLOR_ORANGE_F[0] * fade, COLOR_ORANGE_F[1] * fade, COLOR_ORANGE_F[2] * fade];
+        }
+        if (tn > SWEEP_END) {
+          const settle = _smoothstep(SWEEP_END, SWEEP_END + 0.20, tn);
+          const cycle = Math.floor(t / PERIOD);
+          const hueAtPass = (led.xn * 280 + cycle * 60) % 360;
+          const passColor = _hsv2rgbF(hueAtPass, 0.85, 0.95);
+          return _lerpColor(passColor, COLOR_ORANGE_F, settle);
+        }
+        const sweepPos = tn / SWEEP_END;
+        const localX = led.xn;
+        const EDGE = 0.10;
+        if (localX < sweepPos - EDGE) {
+          const cycle = Math.floor(t / PERIOD);
+          const h = (localX * 280 + cycle * 60) % 360;
+          return _hsv2rgbF(h, 0.85, 0.95);
+        } else if (localX < sweepPos + EDGE) {
+          const cycle = Math.floor(t / PERIOD);
+          const ed = (localX - sweepPos) / EDGE;
+          const eh = ((sweepPos * 360) + ed * 90 + cycle * 60 + 280) % 360;
+          const intensity = 1 - Math.abs(ed) * 0.3;
+          const peakBoost = Math.exp(-Math.pow(ed / 0.4, 2)) * 0.3;
+          return _hsv2rgbF(eh, 1.0, Math.min(1, intensity + peakBoost));
+        } else {
+          return [0, 0, 0];
+        }
+      }
+
+      if (mode === 4) {
+        // Aurora
+        const y_top = 8 - y8;
+        const n = perlin(x8 * 0.12 + t, y_top * 0.04, t * 0.08);
+        const s = Math.sin(x8 * 0.35 + n * 5.5) * 0.5 + 0.5;
+        const lum = Math.pow(s, 2.5);
+        const hueBase = 140 + Math.sin(t * 0.5) * 40;
+        const hue = ((hueBase + y_top * 15) % 360 + 360) % 360;
+        return _hsv2rgbF(hue, 0.9, lum);
+      }
+
+      if (mode === 5) {
+        // Ocean
+        const w = perlin(x8 * 0.35 - t, y8 * 0.25, t * 0.15);
+        const amp = Math.sin(x8 * 0.6 + t * 2.8 + w * 4.5);
+        const baseB = (amp * 0.5 + 0.5) * 180 / 255 + 75 / 255;
+        const f = Math.max(0, (amp - 0.35) / 0.65);
+        return [baseB * f, baseB * 0.4 + baseB * 0.6 * f, baseB];
+      }
+
+      if (mode === 6) {
+        // Flame
+        const y_top = 8 - y8;
+        const n = perlin(x8 * 0.45, y_top * 0.2 + t * 3.5, t * 0.4);
+        let heat = (n * 0.5 + 0.5) * (1.2 - y_top / 6.5);
+        if (heat < 0) heat = 0;
+        if (heat > 1) heat = 1;
+        return [heat, Math.pow(heat, 2.2) * 0.7, Math.pow(heat, 3.5) * 0.3];
+      }
+
+      return [0, 0, 0];
+    }
+
+    // Animation loop state
+    let osramAnimRaf = null;
+    let osramAnimStart = 0;
+    let osramAnimMode = 0;
+    const osramFbLinear = OSRAM_LEDS.map(() => [0, 0, 0]);
+    const osramFbEMA = OSRAM_LEDS.map(() => [0, 0, 0]);
+    const EMA_ALPHA = 0.65;
+
+    function startOsramPreviewAnimation(mode) {
+      // Stop any running anim
+      if (osramAnimRaf) {
+        cancelAnimationFrame(osramAnimRaf);
+        osramAnimRaf = null;
+      }
+      osramAnimMode = mode;
+
+      // mode 0 (static): leave preview as-is
+      // mode 255 (off): clear and stop
+      if (mode === 0) return;
+      if (mode === 255) {
+        for (let i = 0; i < 64; i++) {
+          osramFb[i] = { r: 0, g: 0, b: 0 };
+          osramFbEMA[i][0] = osramFbEMA[i][1] = osramFbEMA[i][2] = 0;
+        }
+        renderOsramPreview();
+        return;
+      }
+
+      osramAnimStart = performance.now();
+      // Reset EMA so transitions start clean
+      for (let i = 0; i < 64; i++) {
+        osramFbEMA[i][0] = osramFbEMA[i][1] = osramFbEMA[i][2] = 0;
+      }
+      osramAnimLoop();
+    }
+
+    function osramAnimLoop() {
+      const t = (performance.now() - osramAnimStart) / 1000;
+      // Compute linear RGB for each LED
+      for (const led of OSRAM_LEDS) {
+        const [r, g, b] = osramComputeColor(led, osramAnimMode, t);
+        // EMA smoothing
+        osramFbEMA[led.i][0] = EMA_ALPHA * r + (1 - EMA_ALPHA) * osramFbEMA[led.i][0];
+        osramFbEMA[led.i][1] = EMA_ALPHA * g + (1 - EMA_ALPHA) * osramFbEMA[led.i][1];
+        osramFbEMA[led.i][2] = EMA_ALPHA * b + (1 - EMA_ALPHA) * osramFbEMA[led.i][2];
+        // Apply display gamma 2.2 and convert to 8-bit for SVG fill
+        const rs = Math.max(0, Math.min(1, osramFbEMA[led.i][0]));
+        const gs = Math.max(0, Math.min(1, osramFbEMA[led.i][1]));
+        const bs = Math.max(0, Math.min(1, osramFbEMA[led.i][2]));
+        osramFb[led.i] = {
+          r: Math.round(Math.pow(rs, 1 / 2.2) * 255),
+          g: Math.round(Math.pow(gs, 1 / 2.2) * 255),
+          b: Math.round(Math.pow(bs, 1 / 2.2) * 255),
+        };
+      }
+      renderOsramPreview();
+      // ~30 fps cap to be battery-friendly
+      osramAnimRaf = setTimeout(() => requestAnimationFrame(osramAnimLoop), 33);
+    }
+
+    // ============================================================================
+    // Init
+    // ============================================================================
     window.addEventListener('load', () => {
-      rasterizeBaseWheel();
       setStatus('', 'Disconnected — tap to connect');
-      log('VIOLA BLE Controller v3 ready', 'ok');
+      // Pre-init log only if VIOLA view is being shown
+      log('LED Module Controller v1.0 ready', 'ok');
       log(`Service UUID: ${UART_SVC}`);
       if (!navigator.bluetooth) {
         log('Warning: Web Bluetooth unavailable in this browser', 'err');
       }
     });
-    window.addEventListener('resize', rasterizeBaseWheel);
+    window.addEventListener('resize', () => {
+      if (violaWheelInitialized) rasterizeBaseWheel(violaWheel, violaWheelCache, 'viola');
+      if (osramWheelInitialized) rasterizeBaseWheel(osramWheel, osramWheelCache, 'osram');
+    });
   </script>
+
 </body>
 
 </html>
