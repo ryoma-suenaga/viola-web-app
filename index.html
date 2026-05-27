@@ -565,8 +565,8 @@
             </svg>
           </div>
           <div class="title">8 × 8 MatrixArray Module</div>
-          <div class="subtitle">VIOLA — 64-pixel programmable RGB matrix with per-pixel color, built-in effects, and
-            scrolling text.</div>
+          <div class="subtitle">VIOLA — 64-pixel programmable RGB matrix with per-pixel color and built-in effects.
+          </div>
           <div class="meta">Device: x64 LED Driver</div>
         </button>
 
@@ -634,12 +634,6 @@
         <div class="label"><span>Global Brightness (GCC)</span><span id="gccVal" class="value">0x20 (32/64)</span></div>
         <input type="range" id="gccRange" min="0" max="64" value="32" oninput="onGccChange(this.value)">
         <div style="font-size:.6rem;color:#555;text-align:right">IS31FL3729 register A1h, 7-bit (0–0x40)</div>
-      </div>
-
-      <div class="card">
-        <div class="label"><span>Scrolling Text</span><span class="value">ASCII, 50 chars</span></div>
-        <input type="text" id="scrollText" class="text-input" maxlength="50" placeholder="Enter message...">
-        <button class="btn-primary" onclick="sendText()">SEND TEXT</button>
       </div>
 
       <div class="card">
@@ -1025,15 +1019,6 @@
       }
     }
 
-    async function sendText() {
-      const txt = $('scrollText').value;
-      if (!txt) { log('Text is empty', 'err'); return; }
-      const enc = new TextEncoder();
-      const utf8 = enc.encode(txt);
-      if (utf8.length > 50) { log('Text exceeds 50 bytes', 'err'); return; }
-      await sendCmd([0x06, utf8.length, ...utf8]);
-    }
-
     // VIOLA per-pixel: [0x01][x][y][R][G][B]
     async function sendVIOLAPixel(x, y, r, g, b) {
       await sendCmd([0x01, x & 7, y & 7, r & 0xff, g & 0xff, b & 0xff]);
@@ -1073,17 +1058,7 @@
       if (violaWheelInitialized) return;
       violaWheel = $('colorWheel');
       violaWheelCache = document.createElement('canvas');
-      // Defer rasterization until after layout/display change so clientWidth>0.
-      // Use a double rAF for safety (single rAF can fire before layout in some
-      // browsers when display:none → display:block in the same task).
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (violaWheel.clientWidth === 0) {
-          log('VIOLA wheel canvas has zero width — retry shortly', 'err');
-          setTimeout(() => rasterizeBaseWheel(violaWheel, violaWheelCache, 'viola'), 50);
-          return;
-        }
-        rasterizeBaseWheel(violaWheel, violaWheelCache, 'viola');
-      }));
+      rasterizeBaseWheel(violaWheel, violaWheelCache, 'viola');
       violaWheel.addEventListener('pointerdown', onVIOLAWheelDown);
       violaWheel.addEventListener('pointermove', onVIOLAWheelMove);
       violaWheel.addEventListener('pointerup', onVIOLAWheelUp);
@@ -1145,15 +1120,7 @@
       if (osramWheelInitialized) return;
       osramWheel = $('colorWheelOsram');
       osramWheelCache = document.createElement('canvas');
-      // Defer rasterization until after layout/display change so clientWidth>0.
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (osramWheel.clientWidth === 0) {
-          log('OSRAM wheel canvas has zero width — retry shortly', 'err');
-          setTimeout(() => rasterizeBaseWheel(osramWheel, osramWheelCache, 'osram'), 50);
-          return;
-        }
-        rasterizeBaseWheel(osramWheel, osramWheelCache, 'osram');
-      }));
+      rasterizeBaseWheel(osramWheel, osramWheelCache, 'osram');
       osramWheel.addEventListener('pointerdown', onOsramWheelDown);
       osramWheel.addEventListener('pointermove', onOsramWheelMove);
       osramWheel.addEventListener('pointerup', onOsramWheelUp);
@@ -1280,7 +1247,7 @@
     // ============================================================================
     // OSRAM live preview — physical LED positions (tap to set per-LED color)
     // ============================================================================
-    const OSRAM_LEDS = [{ "i": 0, "x": 15.55, "y": 38.36, "L": "O", "sw": 0, "cs": 0 }, { "i": 1, "x": 23.71, "y": 38.36, "L": "O", "sw": 0, "cs": 1 }, { "i": 2, "x": 8.73, "y": 33.35, "L": "O", "sw": 0, "cs": 2 }, { "i": 3, "x": 5.26, "y": 25.61, "L": "O", "sw": 0, "cs": 3 }, { "i": 4, "x": 5.23, "y": 17.12, "L": "O", "sw": 0, "cs": 4 }, { "i": 5, "x": 8.65, "y": 9.36, "L": "O", "sw": 0, "cs": 5 }, { "i": 6, "x": 15.43, "y": 4.30, "L": "O", "sw": 0, "cs": 6 }, { "i": 7, "x": 23.83, "y": 4.30, "L": "O", "sw": 0, "cs": 7 }, { "i": 8, "x": 48.06, "y": 34.60, "L": "S", "sw": 1, "cs": 0 }, { "i": 9, "x": 30.53, "y": 33.35, "L": "O", "sw": 1, "cs": 1 }, { "i": 10, "x": 48.08, "y": 26.47, "L": "S", "sw": 1, "cs": 2 }, { "i": 11, "x": 34.00, "y": 25.61, "L": "O", "sw": 1, "cs": 3 }, { "i": 12, "x": 34.03, "y": 17.12, "L": "O", "sw": 1, "cs": 4 }, { "i": 13, "x": 47.01, "y": 10.77, "L": "S", "sw": 1, "cs": 5 }, { "i": 14, "x": 30.62, "y": 9.36, "L": "O", "sw": 1, "cs": 6 }, { "i": 15, "x": 52.72, "y": 5.02, "L": "S", "sw": 1, "cs": 7 }, { "i": 16, "x": 54.84, "y": 39.18, "L": "S", "sw": 2, "cs": 0 }, { "i": 17, "x": 63.05, "y": 38.60, "L": "S", "sw": 2, "cs": 1 }, { "i": 18, "x": 69.04, "y": 33.15, "L": "S", "sw": 2, "cs": 2 }, { "i": 19, "x": 55.74, "y": 23.06, "L": "S", "sw": 2, "cs": 3 }, { "i": 20, "x": 63.86, "y": 20.81, "L": "S", "sw": 2, "cs": 4 }, { "i": 21, "x": 69.73, "y": 15.23, "L": "S", "sw": 2, "cs": 5 }, { "i": 22, "x": 68.25, "y": 7.44, "L": "S", "sw": 2, "cs": 6 }, { "i": 23, "x": 60.86, "y": 3.99, "L": "S", "sw": 2, "cs": 7 }, { "i": 24, "x": 91.99, "y": 37.60, "L": "R", "sw": 3, "cs": 0 }, { "i": 25, "x": 83.53, "y": 37.54, "L": "R", "sw": 3, "cs": 1 }, { "i": 26, "x": 83.53, "y": 29.52, "L": "R", "sw": 3, "cs": 2 }, { "i": 27, "x": 83.53, "y": 21.83, "L": "R", "sw": 3, "cs": 3 }, { "i": 28, "x": 97.68, "y": 18.79, "L": "R", "sw": 3, "cs": 4 }, { "i": 29, "x": 88.20, "y": 18.78, "L": "R", "sw": 3, "cs": 5 }, { "i": 30, "x": 83.53, "y": 14.28, "L": "R", "sw": 3, "cs": 6 }, { "i": 31, "x": 83.53, "y": 6.28, "L": "R", "sw": 3, "cs": 7 }, { "i": 32, "x": 100.58, "y": 37.52, "L": "R", "sw": 4, "cs": 0 }, { "i": 33, "x": 106.43, "y": 31.34, "L": "R", "sw": 4, "cs": 1 }, { "i": 34, "x": 105.46, "y": 22.71, "L": "R", "sw": 4, "cs": 2 }, { "i": 35, "x": 123.56, "y": 21.97, "L": "A", "sw": 4, "cs": 3 }, { "i": 36, "x": 120.65, "y": 14.00, "L": "A", "sw": 4, "cs": 4 }, { "i": 37, "x": 100.61, "y": 12.06, "L": "R", "sw": 4, "cs": 5 }, { "i": 38, "x": 117.74, "y": 6.01, "L": "A", "sw": 4, "cs": 6 }, { "i": 39, "x": 103.98, "y": 4.88, "L": "R", "sw": 4, "cs": 7 }, { "i": 40, "x": 131.89, "y": 36.90, "L": "A", "sw": 5, "cs": 0 }, { "i": 41, "x": 126.48, "y": 29.96, "L": "A", "sw": 5, "cs": 1 }, { "i": 42, "x": 136.76, "y": 29.96, "L": "A", "sw": 5, "cs": 2 }, { "i": 43, "x": 139.67, "y": 21.97, "L": "A", "sw": 5, "cs": 3 }, { "i": 44, "x": 142.58, "y": 14.00, "L": "A", "sw": 5, "cs": 4 }, { "i": 45, "x": 127.62, "y": 13.17, "L": "A", "sw": 5, "cs": 5 }, { "i": 46, "x": 135.62, "y": 13.17, "L": "A", "sw": 5, "cs": 6 }, { "i": 47, "x": 145.50, "y": 6.01, "L": "A", "sw": 5, "cs": 7 }, { "i": 48, "x": 158.67, "y": 37.49, "L": "M", "sw": 6, "cs": 0 }, { "i": 49, "x": 162.90, "y": 33.68, "L": "M", "sw": 6, "cs": 1 }, { "i": 50, "x": 158.69, "y": 29.90, "L": "M", "sw": 6, "cs": 2 }, { "i": 51, "x": 167.30, "y": 26.54, "L": "M", "sw": 6, "cs": 3 }, { "i": 52, "x": 158.69, "y": 21.83, "L": "M", "sw": 6, "cs": 4 }, { "i": 53, "x": 173.36, "y": 21.14, "L": "M", "sw": 6, "cs": 5 }, { "i": 54, "x": 158.69, "y": 14.26, "L": "M", "sw": 6, "cs": 6 }, { "i": 55, "x": 158.69, "y": 6.23, "L": "M", "sw": 6, "cs": 7 }, { "i": 56, "x": 188.59, "y": 37.49, "L": "M", "sw": 7, "cs": 0 }, { "i": 57, "x": 184.38, "y": 33.68, "L": "M", "sw": 7, "cs": 1 }, { "i": 58, "x": 188.59, "y": 29.90, "L": "M", "sw": 7, "cs": 2 }, { "i": 59, "x": 179.98, "y": 26.54, "L": "M", "sw": 7, "cs": 3 }, { "i": 60, "x": 188.59, "y": 21.83, "L": "M", "sw": 7, "cs": 4 }, { "i": 61, "x": 188.59, "y": 14.26, "L": "M", "sw": 7, "cs": 5 }, { "i": 62, "x": 173.52, "y": 13.33, "L": "M", "sw": 7, "cs": 6 }, { "i": 63, "x": 188.59, "y": 6.23, "L": "M", "sw": 7, "cs": 7 }];
+    const OSRAM_LEDS = [{ "i": 0, "x": 15.55, "y": 38.36, "L": "O", "sw": 0, "cs": 0 }, { "i": 1, "x": 23.71, "y": 38.36, "L": "O", "sw": 0, "cs": 1 }, { "i": 2, "x": 8.73, "y": 33.35, "L": "O", "sw": 0, "cs": 2 }, { "i": 3, "x": 5.26, "y": 25.61, "L": "O", "sw": 0, "cs": 3 }, { "i": 4, "x": 5.23, "y": 17.12, "L": "O", "sw": 0, "cs": 4 }, { "i": 5, "x": 8.65, "y": 9.36, "L": "O", "sw": 0, "cs": 5 }, { "i": 6, "x": 15.43, "y": 4.3, "L": "O", "sw": 0, "cs": 6 }, { "i": 7, "x": 23.83, "y": 4.3, "L": "O", "sw": 0, "cs": 7 }, { "i": 8, "x": 48.06, "y": 34.6, "L": "S", "sw": 1, "cs": 0 }, { "i": 9, "x": 48.08, "y": 26.47, "L": "S", "sw": 1, "cs": 1 }, { "i": 10, "x": 34.0, "y": 25.61, "L": "O", "sw": 1, "cs": 2 }, { "i": 11, "x": 30.53, "y": 33.35, "L": "O", "sw": 1, "cs": 3 }, { "i": 12, "x": 34.03, "y": 17.12, "L": "O", "sw": 1, "cs": 4 }, { "i": 13, "x": 30.62, "y": 9.36, "L": "O", "sw": 1, "cs": 5 }, { "i": 14, "x": 47.01, "y": 10.77, "L": "S", "sw": 1, "cs": 6 }, { "i": 15, "x": 52.72, "y": 5.02, "L": "S", "sw": 1, "cs": 7 }, { "i": 16, "x": 54.84, "y": 39.18, "L": "S", "sw": 2, "cs": 0 }, { "i": 17, "x": 63.05, "y": 38.6, "L": "S", "sw": 2, "cs": 1 }, { "i": 18, "x": 69.04, "y": 33.15, "L": "S", "sw": 2, "cs": 2 }, { "i": 19, "x": 63.86, "y": 20.81, "L": "S", "sw": 2, "cs": 3 }, { "i": 20, "x": 69.73, "y": 15.23, "L": "S", "sw": 2, "cs": 4 }, { "i": 21, "x": 68.25, "y": 7.44, "L": "S", "sw": 2, "cs": 5 }, { "i": 22, "x": 60.86, "y": 3.99, "L": "S", "sw": 2, "cs": 6 }, { "i": 23, "x": 55.74, "y": 23.06, "L": "S", "sw": 2, "cs": 7 }, { "i": 24, "x": 91.99, "y": 37.6, "L": "R", "sw": 3, "cs": 0 }, { "i": 25, "x": 83.53, "y": 37.54, "L": "R", "sw": 3, "cs": 1 }, { "i": 26, "x": 83.53, "y": 29.52, "L": "R", "sw": 3, "cs": 2 }, { "i": 27, "x": 83.53, "y": 21.83, "L": "R", "sw": 3, "cs": 3 }, { "i": 28, "x": 88.2, "y": 18.78, "L": "R", "sw": 3, "cs": 4 }, { "i": 29, "x": 83.53, "y": 14.28, "L": "R", "sw": 3, "cs": 5 }, { "i": 30, "x": 83.53, "y": 6.28, "L": "R", "sw": 3, "cs": 6 }, { "i": 31, "x": 97.68, "y": 18.79, "L": "R", "sw": 3, "cs": 7 }, { "i": 32, "x": 100.58, "y": 37.52, "L": "R", "sw": 4, "cs": 0 }, { "i": 33, "x": 106.43, "y": 31.34, "L": "R", "sw": 4, "cs": 1 }, { "i": 34, "x": 105.46, "y": 22.71, "L": "R", "sw": 4, "cs": 2 }, { "i": 35, "x": 100.61, "y": 12.06, "L": "R", "sw": 4, "cs": 3 }, { "i": 36, "x": 103.98, "y": 4.88, "L": "R", "sw": 4, "cs": 4 }, { "i": 37, "x": 117.74, "y": 6.01, "L": "A", "sw": 4, "cs": 5 }, { "i": 38, "x": 120.65, "y": 14.0, "L": "A", "sw": 4, "cs": 6 }, { "i": 39, "x": 123.56, "y": 21.97, "L": "A", "sw": 4, "cs": 7 }, { "i": 40, "x": 131.89, "y": 36.9, "L": "A", "sw": 5, "cs": 0 }, { "i": 41, "x": 136.76, "y": 29.96, "L": "A", "sw": 5, "cs": 1 }, { "i": 42, "x": 139.67, "y": 21.97, "L": "A", "sw": 5, "cs": 2 }, { "i": 43, "x": 142.58, "y": 14.0, "L": "A", "sw": 5, "cs": 3 }, { "i": 44, "x": 135.62, "y": 13.17, "L": "A", "sw": 5, "cs": 4 }, { "i": 45, "x": 127.62, "y": 13.17, "L": "A", "sw": 5, "cs": 5 }, { "i": 46, "x": 126.48, "y": 29.96, "L": "A", "sw": 5, "cs": 6 }, { "i": 47, "x": 145.5, "y": 6.01, "L": "A", "sw": 5, "cs": 7 }, { "i": 48, "x": 158.67, "y": 37.49, "L": "M", "sw": 6, "cs": 0 }, { "i": 49, "x": 162.9, "y": 33.68, "L": "M", "sw": 6, "cs": 1 }, { "i": 50, "x": 158.69, "y": 29.9, "L": "M", "sw": 6, "cs": 2 }, { "i": 51, "x": 158.69, "y": 21.83, "L": "M", "sw": 6, "cs": 3 }, { "i": 52, "x": 158.69, "y": 14.26, "L": "M", "sw": 6, "cs": 4 }, { "i": 53, "x": 158.69, "y": 6.23, "L": "M", "sw": 6, "cs": 5 }, { "i": 54, "x": 173.36, "y": 21.14, "L": "M", "sw": 6, "cs": 6 }, { "i": 55, "x": 167.3, "y": 26.54, "L": "M", "sw": 6, "cs": 7 }, { "i": 56, "x": 188.59, "y": 37.49, "L": "M", "sw": 7, "cs": 0 }, { "i": 57, "x": 184.38, "y": 33.68, "L": "M", "sw": 7, "cs": 1 }, { "i": 58, "x": 188.59, "y": 29.9, "L": "M", "sw": 7, "cs": 2 }, { "i": 59, "x": 188.59, "y": 21.83, "L": "M", "sw": 7, "cs": 3 }, { "i": 60, "x": 188.59, "y": 14.26, "L": "M", "sw": 7, "cs": 4 }, { "i": 61, "x": 188.59, "y": 6.23, "L": "M", "sw": 7, "cs": 5 }, { "i": 62, "x": 173.52, "y": 13.33, "L": "M", "sw": 7, "cs": 6 }, { "i": 63, "x": 179.98, "y": 26.54, "L": "M", "sw": 7, "cs": 7 }];
 
     const OSRAM_XMIN = 5.23, OSRAM_XMAX = 188.59;
     const OSRAM_YMIN = 3.99, OSRAM_YMAX = 39.18;
@@ -1338,20 +1305,24 @@
       led.yn = (led.y - OSRAM_YMIN) / OSRAM_H;
     });
 
-    // Letter group metadata for Logo 1 (parallel stroke-order shooting stars)
+    // Letter group metadata for Logo 1 (Meteor)
     const LETTER_GROUPS = { O: [], S: [], R: [], A: [], M: [] };
     OSRAM_LEDS.forEach(l => LETTER_GROUPS[l.L].push(l));
     // Derive per-letter normalized stroke order (0..1 within each letter)
-    // using the SAME ordering as the firmware's LETTER_STROKE table:
-    // Y descending (top first), X ascending (left first within same Y).
-    // This guarantees the preview matches the on-device animation exactly.
+    // Note: source data has no .s field anymore — we approximate stroke order
+    // from xn/yn using a simple "start top-left, walk around" heuristic.
+    // In practice this gives a pleasant meteor-trace path.
     for (const L in LETTER_GROUPS) {
       const arr = LETTER_GROUPS[L];
-      arr.sort((a, b) => (b.y - a.y) || (a.x - b.x));
-      arr.forEach((p, i) => {
-        p.stroke = i;
-        p.sNorm = arr.length > 1 ? i / (arr.length - 1) : 0;
+      // Sort by an angular sweep around the letter centroid + radius
+      const cx = arr.reduce((s, p) => s + p.x, 0) / arr.length;
+      const cy = arr.reduce((s, p) => s + p.y, 0) / arr.length;
+      arr.forEach(p => {
+        p._ang = Math.atan2(p.y - cy, p.x - cx);
+        p._r = Math.sqrt((p.x - cx) ** 2 + (p.y - cy) ** 2);
       });
+      arr.sort((a, b) => a._ang - b._ang);
+      arr.forEach((p, i) => { p.sNorm = arr.length > 1 ? i / (arr.length - 1) : 0; });
     }
 
     const COLOR_ORANGE_F = [240 / 255, 70 / 255, 28 / 255];
