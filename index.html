@@ -457,18 +457,6 @@
     }
 
     /* ===== OSRAM-specific ===== */
-    .osram-preview-wrap {
-      background: #000;
-      border-radius: 10px;
-      padding: 18px;
-      overflow-x: auto;
-    }
-
-    .osram-preview-wrap svg {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
 
     .effect-grid {
       display: grid;
@@ -602,7 +590,7 @@
       </div>
 
       <div class="footer">
-        ams OSRAM · LED Module Controller v1.0<br>
+        ams OSRAM · LED Module Controller v1.4<br>
         Web Bluetooth · Chrome / Edge required
       </div>
     </div>
@@ -681,25 +669,11 @@
       </div>
 
       <div class="card">
-        <div class="label"><span>Live Preview · physical LED positions</span><span class="value">64 LEDs</span></div>
-        <div class="osram-preview-wrap">
-          <svg id="osramPreview" viewBox="0 0 800 180" preserveAspectRatio="xMidYMid meet"></svg>
-        </div>
-        <div style="font-size:0.62rem; color:var(--text-faint); margin-top:8px; text-align:center;">
-          Tap any LED to set its color individually
-        </div>
-      </div>
-
-      <div class="card">
         <div class="label"><span>Solid Color</span><span id="osramColorHex" class="value">#F0461C</span></div>
         <canvas id="colorWheelOsram"></canvas>
         <div class="color-readout">
           <span id="osramRgbText">R: 240 G: 70 B: 28</span>
           <div id="osramSwatch" class="swatch" style="background:#f0461c"></div>
-        </div>
-        <div style="display:flex; gap:8px; margin-top:10px;">
-          <button class="grid-2 btn-secondary" onclick="osramFill()" style="flex:1; padding:10px;">FILL ALL</button>
-          <button class="grid-2 btn-secondary" onclick="clearAll()" style="flex:1; padding:10px;">CLEAR</button>
         </div>
       </div>
 
@@ -740,7 +714,7 @@
 
   <script>
     /* ============================================================================
-       Unified BLE LED Module Controller (v1.1 — for x64 LED Driver FW v3.0)
+       Unified BLE LED Module Controller (v1.4 — for x64 LED Driver FW v3.2)
        ----------------------------------------------------------------------------
        Single-page app that hosts two modules:
          - VIOLA (8×8 RGB matrix)
@@ -786,12 +760,6 @@
       $('backBar').classList.remove('show');
       $('moduleSubtitle').textContent = 'LED Module Controller';
       $('statusBar').style.display = connected ? 'flex' : 'none';
-      // Stop any OSRAM preview animation when leaving the module
-      if (osramAnimRaf) {
-        cancelAnimationFrame(osramAnimRaf);
-        clearTimeout(osramAnimRaf);
-        osramAnimRaf = null;
-      }
       // Don't disconnect; if user re-enters same module they're still connected
     }
 
@@ -826,7 +794,6 @@
       }
       // Initialize OSRAM-specific UI
       initOSRAMWheel();
-      renderOsramPreview();
       // Default OSRAM color is brand orange
       currentColor = { r: 240, g: 70, b: 28 };
       updateOsramColorUI();
@@ -1004,33 +971,20 @@
     async function sendGcc(g) { await sendCmd([0x03, g & 0x7F]); }
     async function sendSolid(r, g, b) { await sendCmd([0x04, r & 0xff, g & 0xff, b & 0xff]); }
     async function setMode(modeId) {
-      // Send BLE command if connected (silent failure otherwise — preview still runs)
       if (connected && rxChar) {
         await sendCmd([0x05, modeId & 0xff]);
-      } else if (activeModule === 'osram') {
-        log(`Preview only (not connected): mode ${modeId}`, 'tx');
       }
-      // Update OSRAM effect button state if in OSRAM view, and start/stop preview
+      // Update OSRAM effect button active state
       if (activeModule === 'osram') {
         document.querySelectorAll('#osramView .effect-btn').forEach(b => {
           b.classList.toggle('active', parseInt(b.dataset.mode) === modeId);
         });
-        startOsramPreviewAnimation(modeId);
       }
     }
 
     // VIOLA per-pixel: [0x01][x][y][R][G][B]
     async function sendVIOLAPixel(x, y, r, g, b) {
       await sendCmd([0x01, x & 7, y & 7, r & 0xff, g & 0xff, b & 0xff]);
-    }
-
-    // OSRAM per-pixel: [0x01][idx][R][G][B]
-    async function sendOSRAMPixel(idx, r, g, b) {
-      await sendCmd([0x01, idx & 0xff, r & 0xff, g & 0xff, b & 0xff]);
-    }
-
-    async function osramFill() {
-      await sendSolid(currentColor.r, currentColor.g, currentColor.b);
     }
 
     // ============================================================================
@@ -1157,9 +1111,10 @@
       osramLastPickCss = { x, y };
       updateOsramColorUI();
       drawWheelOverlay(osramWheel, osramWheelCache, osramWheelDpr, osramLastPickCss);
-      // Note: OSRAM does NOT auto-fill on color pick; user must press FILL ALL.
-      // This is because tapping individual LEDs in the preview is the primary
-      // way to use color, and accidental wheel touches shouldn't overwrite.
+      // Immediately fill all LEDs with the picked colour and clear any active effect
+      sendSolid(px[0], px[1], px[2]);
+      // Deactivate effect buttons
+      document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
     }
 
     function updateOsramColorUI() {
@@ -1245,372 +1200,12 @@
     }
 
     // ============================================================================
-    // OSRAM live preview — physical LED positions (tap to set per-LED color)
-    // ============================================================================
-    const OSRAM_LEDS = [{ "i": 0, "x": 15.55, "y": 38.36, "L": "O", "sw": 0, "cs": 0 }, { "i": 1, "x": 23.71, "y": 38.36, "L": "O", "sw": 0, "cs": 1 }, { "i": 2, "x": 8.73, "y": 33.35, "L": "O", "sw": 0, "cs": 2 }, { "i": 3, "x": 5.26, "y": 25.61, "L": "O", "sw": 0, "cs": 3 }, { "i": 4, "x": 5.23, "y": 17.12, "L": "O", "sw": 0, "cs": 4 }, { "i": 5, "x": 8.65, "y": 9.36, "L": "O", "sw": 0, "cs": 5 }, { "i": 6, "x": 15.43, "y": 4.3, "L": "O", "sw": 0, "cs": 6 }, { "i": 7, "x": 23.83, "y": 4.3, "L": "O", "sw": 0, "cs": 7 }, { "i": 8, "x": 48.06, "y": 34.6, "L": "S", "sw": 1, "cs": 0 }, { "i": 9, "x": 48.08, "y": 26.47, "L": "S", "sw": 1, "cs": 1 }, { "i": 10, "x": 34.0, "y": 25.61, "L": "O", "sw": 1, "cs": 2 }, { "i": 11, "x": 30.53, "y": 33.35, "L": "O", "sw": 1, "cs": 3 }, { "i": 12, "x": 34.03, "y": 17.12, "L": "O", "sw": 1, "cs": 4 }, { "i": 13, "x": 30.62, "y": 9.36, "L": "O", "sw": 1, "cs": 5 }, { "i": 14, "x": 47.01, "y": 10.77, "L": "S", "sw": 1, "cs": 6 }, { "i": 15, "x": 52.72, "y": 5.02, "L": "S", "sw": 1, "cs": 7 }, { "i": 16, "x": 54.84, "y": 39.18, "L": "S", "sw": 2, "cs": 0 }, { "i": 17, "x": 63.05, "y": 38.6, "L": "S", "sw": 2, "cs": 1 }, { "i": 18, "x": 69.04, "y": 33.15, "L": "S", "sw": 2, "cs": 2 }, { "i": 19, "x": 63.86, "y": 20.81, "L": "S", "sw": 2, "cs": 3 }, { "i": 20, "x": 69.73, "y": 15.23, "L": "S", "sw": 2, "cs": 4 }, { "i": 21, "x": 68.25, "y": 7.44, "L": "S", "sw": 2, "cs": 5 }, { "i": 22, "x": 60.86, "y": 3.99, "L": "S", "sw": 2, "cs": 6 }, { "i": 23, "x": 55.74, "y": 23.06, "L": "S", "sw": 2, "cs": 7 }, { "i": 24, "x": 91.99, "y": 37.6, "L": "R", "sw": 3, "cs": 0 }, { "i": 25, "x": 83.53, "y": 37.54, "L": "R", "sw": 3, "cs": 1 }, { "i": 26, "x": 83.53, "y": 29.52, "L": "R", "sw": 3, "cs": 2 }, { "i": 27, "x": 83.53, "y": 21.83, "L": "R", "sw": 3, "cs": 3 }, { "i": 28, "x": 88.2, "y": 18.78, "L": "R", "sw": 3, "cs": 4 }, { "i": 29, "x": 83.53, "y": 14.28, "L": "R", "sw": 3, "cs": 5 }, { "i": 30, "x": 83.53, "y": 6.28, "L": "R", "sw": 3, "cs": 6 }, { "i": 31, "x": 97.68, "y": 18.79, "L": "R", "sw": 3, "cs": 7 }, { "i": 32, "x": 100.58, "y": 37.52, "L": "R", "sw": 4, "cs": 0 }, { "i": 33, "x": 106.43, "y": 31.34, "L": "R", "sw": 4, "cs": 1 }, { "i": 34, "x": 105.46, "y": 22.71, "L": "R", "sw": 4, "cs": 2 }, { "i": 35, "x": 100.61, "y": 12.06, "L": "R", "sw": 4, "cs": 3 }, { "i": 36, "x": 103.98, "y": 4.88, "L": "R", "sw": 4, "cs": 4 }, { "i": 37, "x": 117.74, "y": 6.01, "L": "A", "sw": 4, "cs": 5 }, { "i": 38, "x": 120.65, "y": 14.0, "L": "A", "sw": 4, "cs": 6 }, { "i": 39, "x": 123.56, "y": 21.97, "L": "A", "sw": 4, "cs": 7 }, { "i": 40, "x": 131.89, "y": 36.9, "L": "A", "sw": 5, "cs": 0 }, { "i": 41, "x": 136.76, "y": 29.96, "L": "A", "sw": 5, "cs": 1 }, { "i": 42, "x": 139.67, "y": 21.97, "L": "A", "sw": 5, "cs": 2 }, { "i": 43, "x": 142.58, "y": 14.0, "L": "A", "sw": 5, "cs": 3 }, { "i": 44, "x": 135.62, "y": 13.17, "L": "A", "sw": 5, "cs": 4 }, { "i": 45, "x": 127.62, "y": 13.17, "L": "A", "sw": 5, "cs": 5 }, { "i": 46, "x": 126.48, "y": 29.96, "L": "A", "sw": 5, "cs": 6 }, { "i": 47, "x": 145.5, "y": 6.01, "L": "A", "sw": 5, "cs": 7 }, { "i": 48, "x": 158.67, "y": 37.49, "L": "M", "sw": 6, "cs": 0 }, { "i": 49, "x": 162.9, "y": 33.68, "L": "M", "sw": 6, "cs": 1 }, { "i": 50, "x": 158.69, "y": 29.9, "L": "M", "sw": 6, "cs": 2 }, { "i": 51, "x": 158.69, "y": 21.83, "L": "M", "sw": 6, "cs": 3 }, { "i": 52, "x": 158.69, "y": 14.26, "L": "M", "sw": 6, "cs": 4 }, { "i": 53, "x": 158.69, "y": 6.23, "L": "M", "sw": 6, "cs": 5 }, { "i": 54, "x": 173.36, "y": 21.14, "L": "M", "sw": 6, "cs": 6 }, { "i": 55, "x": 167.3, "y": 26.54, "L": "M", "sw": 6, "cs": 7 }, { "i": 56, "x": 188.59, "y": 37.49, "L": "M", "sw": 7, "cs": 0 }, { "i": 57, "x": 184.38, "y": 33.68, "L": "M", "sw": 7, "cs": 1 }, { "i": 58, "x": 188.59, "y": 29.9, "L": "M", "sw": 7, "cs": 2 }, { "i": 59, "x": 188.59, "y": 21.83, "L": "M", "sw": 7, "cs": 3 }, { "i": 60, "x": 188.59, "y": 14.26, "L": "M", "sw": 7, "cs": 4 }, { "i": 61, "x": 188.59, "y": 6.23, "L": "M", "sw": 7, "cs": 5 }, { "i": 62, "x": 173.52, "y": 13.33, "L": "M", "sw": 7, "cs": 6 }, { "i": 63, "x": 179.98, "y": 26.54, "L": "M", "sw": 7, "cs": 7 }];
-
-    const OSRAM_XMIN = 5.23, OSRAM_XMAX = 188.59;
-    const OSRAM_YMIN = 3.99, OSRAM_YMAX = 39.18;
-    const OSRAM_W = OSRAM_XMAX - OSRAM_XMIN;
-    const OSRAM_H = OSRAM_YMAX - OSRAM_YMIN;
-    const osramFb = OSRAM_LEDS.map(() => ({ r: 0, g: 0, b: 0 }));
-
-    function renderOsramPreview() {
-      const svg = $('osramPreview');
-      const SVG_W = 800, SVG_H = 180, MARGIN = 22;
-      const SCALE = (SVG_W - 2 * MARGIN) / OSRAM_W;
-      const sx = x => MARGIN + (x - OSRAM_XMIN) * SCALE;
-      const sy = y => SVG_H - MARGIN - (y - OSRAM_YMIN) * SCALE;
-      const R = 9;
-
-      let html = `<defs>
-    <filter id="osramGlow" x="-100%" y="-100%" width="300%" height="300%">
-      <feGaussianBlur stdDeviation="3.5" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>`;
-
-      for (const led of OSRAM_LEDS) {
-        const { r, g, b } = osramFb[led.i];
-        const isOff = r + g + b < 12;
-        const color = isOff ? '#1a1a24' : `rgb(${r},${g},${b})`;
-        const filter = !isOff ? 'filter="url(#osramGlow)"' : '';
-        html += `<circle cx="${sx(led.x).toFixed(1)}" cy="${sy(led.y).toFixed(1)}" r="${R}" fill="${color}" stroke="#fff" stroke-width="0.5" stroke-opacity="${isOff ? 0.1 : 0.35}" ${filter} data-i="${led.i}" style="cursor:pointer;"/>`;
-      }
-      svg.innerHTML = html;
-      svg.querySelectorAll('circle').forEach(c => {
-        c.addEventListener('click', () => {
-          const i = parseInt(c.dataset.i);
-          const { r, g, b } = currentColor;
-          osramFb[i] = { r, g, b };
-          sendOSRAMPixel(i, r, g, b);
-          renderOsramPreview();
-        });
-      });
-    }
-
-    // ============================================================================
-    // OSRAM live preview animation engine
-    // ----------------------------------------------------------------------------
-    // Mirrors the firmware's coordinate-based effect renderer so the user can
-    // preview each effect locally — works even when BLE is disconnected. The
-    // math is the same; the only differences are:
-    //   - Frame rate is capped at ~30 fps for battery friendliness in the browser
-    //   - Gamma 2.2 is applied at display time (firmware does it via LUT in flush)
-    // ============================================================================
-
-    // Normalized LED coordinates (added once at startup for fast inner-loop access)
-    OSRAM_LEDS.forEach(led => {
-      led.xn = (led.x - OSRAM_XMIN) / OSRAM_W;
-      led.yn = (led.y - OSRAM_YMIN) / OSRAM_H;
-    });
-
-    // Letter group metadata for Logo 1 (Meteor)
-    const LETTER_GROUPS = { O: [], S: [], R: [], A: [], M: [] };
-    OSRAM_LEDS.forEach(l => LETTER_GROUPS[l.L].push(l));
-    // Derive per-letter normalized stroke order (0..1 within each letter)
-    // Note: source data has no .s field anymore — we approximate stroke order
-    // from xn/yn using a simple "start top-left, walk around" heuristic.
-    // In practice this gives a pleasant meteor-trace path.
-    for (const L in LETTER_GROUPS) {
-      const arr = LETTER_GROUPS[L];
-      // Sort by an angular sweep around the letter centroid + radius
-      const cx = arr.reduce((s, p) => s + p.x, 0) / arr.length;
-      const cy = arr.reduce((s, p) => s + p.y, 0) / arr.length;
-      arr.forEach(p => {
-        p._ang = Math.atan2(p.y - cy, p.x - cx);
-        p._r = Math.sqrt((p.x - cx) ** 2 + (p.y - cy) ** 2);
-      });
-      arr.sort((a, b) => a._ang - b._ang);
-      arr.forEach((p, i) => { p.sNorm = arr.length > 1 ? i / (arr.length - 1) : 0; });
-    }
-
-    const COLOR_ORANGE_F = [240 / 255, 70 / 255, 28 / 255];
-    const COLOR_WHITE_HOT = [1.0, 0.98, 0.92];
-    const COLOR_WHITE_COOL = [0.85, 0.92, 1.0];
-
-    // Perlin noise (deterministic permutation, seed 0xC0FFEE12 — matches FW)
-    const perlinPerm = new Uint8Array(512);
-    (function () {
-      const p = new Uint8Array(256);
-      for (let i = 0; i < 256; i++) p[i] = i;
-      let s = 0xC0FFEE12;
-      for (let i = 255; i > 0; i--) {
-        s = (s * 1664525 + 1013904223) >>> 0;
-        const j = s % (i + 1);
-        [p[i], p[j]] = [p[j], p[i]];
-      }
-      for (let i = 0; i < 512; i++) perlinPerm[i] = p[i & 255];
-    })();
-    function _fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
-    function _lerp(t, a, b) { return a + t * (b - a); }
-    function _grad(h, x, y, z) {
-      const g = h & 15;
-      const u = g < 8 ? x : y;
-      const v = g < 4 ? y : (g === 12 || g === 14) ? x : z;
-      return ((g & 1) === 0 ? u : -u) + ((g & 2) === 0 ? v : -v);
-    }
-    function perlin(x, y, z) {
-      z = z || 0;
-      const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
-      x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
-      const u = _fade(x), v = _fade(y), w = _fade(z);
-      const A = perlinPerm[X] + Y, AA = perlinPerm[A] + Z, AB = perlinPerm[A + 1] + Z;
-      const B = perlinPerm[X + 1] + Y, BA = perlinPerm[B] + Z, BB = perlinPerm[B + 1] + Z;
-      return _lerp(w,
-        _lerp(v, _lerp(u, _grad(perlinPerm[AA], x, y, z), _grad(perlinPerm[BA], x - 1, y, z)),
-          _lerp(u, _grad(perlinPerm[AB], x, y - 1, z), _grad(perlinPerm[BB], x - 1, y - 1, z))),
-        _lerp(v, _lerp(u, _grad(perlinPerm[AA + 1], x, y, z - 1), _grad(perlinPerm[BA + 1], x - 1, y, z - 1)),
-          _lerp(u, _grad(perlinPerm[AB + 1], x, y - 1, z - 1), _grad(perlinPerm[BB + 1], x - 1, y - 1, z - 1))));
-    }
-
-    function _smoothstep(e0, e1, x) {
-      const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
-      return t * t * (3 - 2 * t);
-    }
-    function _lerpColor(a, b, t) {
-      return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
-    }
-    function _hsv2rgbF(h, s, v) {
-      const c = v * s, hh = (h / 60) % 6;
-      const x = c * (1 - Math.abs(hh % 2 - 1));
-      let r = 0, g = 0, b = 0;
-      if (hh < 1) { r = c; g = x; }
-      else if (hh < 2) { r = x; g = c; }
-      else if (hh < 3) { g = c; b = x; }
-      else if (hh < 4) { g = x; b = c; }
-      else if (hh < 5) { r = x; b = c; }
-      else { r = c; b = x; }
-      const m = v - c;
-      return [r + m, g + m, b + m];
-    }
-
-    // Compute color for a single LED for a given mode and time (in seconds).
-    // Returns linear [r, g, b] in 0..1.
-    function osramComputeColor(led, mode, t) {
-      const xn = led.xn, yn = led.yn;
-      const x8 = xn * 8, y8 = yn * 8;
-
-      if (mode === 1) {
-        // Logo 1: Meteor → Orange Logo (8.3s cycle)
-        const PERIOD = 8.33;
-        const tn = (t % PERIOD) / PERIOD;
-        const sLocal = led.sNorm;
-        const STREAK_END = 0.55;
-        const HOLD_BEGIN = 0.62;
-        const FADE_BEGIN = 0.92;
-
-        let streakHead = 0, streakTail = 0, isHead = false;
-        if (tn <= STREAK_END) {
-          const headPos = tn / STREAK_END;
-          const HEAD_WIDTH = 0.10, TAIL = 0.42;
-          const dist = headPos - sLocal;
-          if (dist >= -0.05 && dist < TAIL) {
-            streakHead = Math.exp(-(dist / HEAD_WIDTH) * (dist / HEAD_WIDTH));
-            streakTail = Math.max(0, 1 - dist / TAIL) * 0.5;
-            if (dist < 0) {
-              streakHead *= Math.max(0, 1 + dist / 0.05);
-              streakTail *= Math.max(0, 1 + dist / 0.05);
-            }
-            isHead = streakHead > streakTail * 0.8 && streakHead > 0.15;
-          }
-        }
-        const streakI = Math.max(streakHead, streakTail);
-
-        let revealLevel = 0;
-        const localFillStart = STREAK_END * Math.max(0, sLocal - 0.05);
-        if (tn > localFillStart && tn < HOLD_BEGIN) {
-          revealLevel = _smoothstep(localFillStart, HOLD_BEGIN, tn) * 0.5;
-        } else if (tn >= HOLD_BEGIN && tn < FADE_BEGIN) {
-          revealLevel = 0.5 + _smoothstep(HOLD_BEGIN, 0.85, tn) * 0.5;
-        } else if (tn >= FADE_BEGIN) {
-          revealLevel = 1.0 * (1 - _smoothstep(FADE_BEGIN, 1.0, tn));
-        }
-
-        let r = 0, g = 0, b = 0;
-        if (streakI > 0.001) {
-          const sc = isHead
-            ? _lerpColor(COLOR_WHITE_HOT, COLOR_WHITE_COOL, streakHead)
-            : COLOR_WHITE_HOT;
-          r += sc[0] * streakI; g += sc[1] * streakI; b += sc[2] * streakI;
-        }
-        if (revealLevel > 0.001) {
-          const t2 = _smoothstep(0, 0.85, revealLevel);
-          const rc = _lerpColor(COLOR_WHITE_HOT, COLOR_ORANGE_F, t2);
-          r += rc[0] * revealLevel; g += rc[1] * revealLevel; b += rc[2] * revealLevel;
-        }
-        return [Math.min(1, r), Math.min(1, g), Math.min(1, b)];
-      }
-
-      if (mode === 2) {
-        // Logo 2: Warm-up (12s cycle, multi-color temperature ramp)
-        const PERIOD = 12.0;
-        const tn = (t % PERIOD) / PERIOD;
-        if (tn > 0.75) return COLOR_ORANGE_F.slice();
-        const rampT = tn / 0.75;
-        const localOffset = led.xn * 0.08 + Math.sin(led.i * 0.5) * 0.03;
-        const rampLocal = Math.max(0, Math.min(1, rampT + localOffset - 0.04));
-
-        let hue, sat, val;
-        if (rampLocal < 0.15) {
-          const k = rampLocal / 0.15;
-          hue = 270 - k * 30; sat = 0.65 + k * 0.25; val = k * 0.35;
-        } else if (rampLocal < 0.40) {
-          const k = (rampLocal - 0.15) / 0.25;
-          hue = 240 - k * 60; sat = 0.90; val = 0.35 + k * 0.30;
-        } else if (rampLocal < 0.65) {
-          const k = (rampLocal - 0.40) / 0.25;
-          hue = 180 - k * 120; sat = 0.90 - k * 0.05; val = 0.65 + k * 0.20;
-        } else if (rampLocal < 0.90) {
-          const k = (rampLocal - 0.65) / 0.25;
-          hue = 60 - k * 48; sat = 0.85 + k * 0.03; val = 0.85 + k * 0.09;
-        } else {
-          hue = 12; sat = 0.88; val = 0.94;
-        }
-        const flicker = rampLocal < 0.55
-          ? (Math.sin(t * 11 + led.i * 0.7) * 0.5 + 0.5) * 0.08 * (1 - rampLocal * 1.8)
-          : 0;
-        val = Math.max(0, Math.min(1, val + flicker));
-        return _hsv2rgbF(hue, sat, val);
-      }
-
-      if (mode === 3) {
-        // Logo 3: Reveal (9s cycle, rainbow-edge curtain, then orange)
-        const PERIOD = 9.0;
-        const tn = (t % PERIOD) / PERIOD;
-        const SWEEP_END = 0.45, HOLD_END = 0.92;
-
-        if (tn > HOLD_END) {
-          const k = (tn - HOLD_END) / (1.0 - HOLD_END);
-          const fade = 1 - _smoothstep(0, 1, k);
-          return [COLOR_ORANGE_F[0] * fade, COLOR_ORANGE_F[1] * fade, COLOR_ORANGE_F[2] * fade];
-        }
-        if (tn > SWEEP_END) {
-          const settle = _smoothstep(SWEEP_END, SWEEP_END + 0.20, tn);
-          const cycle = Math.floor(t / PERIOD);
-          const hueAtPass = (led.xn * 280 + cycle * 60) % 360;
-          const passColor = _hsv2rgbF(hueAtPass, 0.85, 0.95);
-          return _lerpColor(passColor, COLOR_ORANGE_F, settle);
-        }
-        const sweepPos = tn / SWEEP_END;
-        const localX = led.xn;
-        const EDGE = 0.10;
-        if (localX < sweepPos - EDGE) {
-          const cycle = Math.floor(t / PERIOD);
-          const h = (localX * 280 + cycle * 60) % 360;
-          return _hsv2rgbF(h, 0.85, 0.95);
-        } else if (localX < sweepPos + EDGE) {
-          const cycle = Math.floor(t / PERIOD);
-          const ed = (localX - sweepPos) / EDGE;
-          const eh = ((sweepPos * 360) + ed * 90 + cycle * 60 + 280) % 360;
-          const intensity = 1 - Math.abs(ed) * 0.3;
-          const peakBoost = Math.exp(-Math.pow(ed / 0.4, 2)) * 0.3;
-          return _hsv2rgbF(eh, 1.0, Math.min(1, intensity + peakBoost));
-        } else {
-          return [0, 0, 0];
-        }
-      }
-
-      if (mode === 4) {
-        // Aurora
-        const y_top = 8 - y8;
-        const n = perlin(x8 * 0.12 + t, y_top * 0.04, t * 0.08);
-        const s = Math.sin(x8 * 0.35 + n * 5.5) * 0.5 + 0.5;
-        const lum = Math.pow(s, 2.5);
-        const hueBase = 140 + Math.sin(t * 0.5) * 40;
-        const hue = ((hueBase + y_top * 15) % 360 + 360) % 360;
-        return _hsv2rgbF(hue, 0.9, lum);
-      }
-
-      if (mode === 5) {
-        // Ocean
-        const w = perlin(x8 * 0.35 - t, y8 * 0.25, t * 0.15);
-        const amp = Math.sin(x8 * 0.6 + t * 2.8 + w * 4.5);
-        const baseB = (amp * 0.5 + 0.5) * 180 / 255 + 75 / 255;
-        const f = Math.max(0, (amp - 0.35) / 0.65);
-        return [baseB * f, baseB * 0.4 + baseB * 0.6 * f, baseB];
-      }
-
-      if (mode === 6) {
-        // Flame
-        const y_top = 8 - y8;
-        const n = perlin(x8 * 0.45, y_top * 0.2 + t * 3.5, t * 0.4);
-        let heat = (n * 0.5 + 0.5) * (1.2 - y_top / 6.5);
-        if (heat < 0) heat = 0;
-        if (heat > 1) heat = 1;
-        return [heat, Math.pow(heat, 2.2) * 0.7, Math.pow(heat, 3.5) * 0.3];
-      }
-
-      return [0, 0, 0];
-    }
-
-    // Animation loop state
-    let osramAnimRaf = null;
-    let osramAnimStart = 0;
-    let osramAnimMode = 0;
-    const osramFbLinear = OSRAM_LEDS.map(() => [0, 0, 0]);
-    const osramFbEMA = OSRAM_LEDS.map(() => [0, 0, 0]);
-    const EMA_ALPHA = 0.65;
-
-    function startOsramPreviewAnimation(mode) {
-      // Stop any running anim
-      if (osramAnimRaf) {
-        cancelAnimationFrame(osramAnimRaf);
-        osramAnimRaf = null;
-      }
-      osramAnimMode = mode;
-
-      // mode 0 (static): leave preview as-is
-      // mode 255 (off): clear and stop
-      if (mode === 0) return;
-      if (mode === 255) {
-        for (let i = 0; i < 64; i++) {
-          osramFb[i] = { r: 0, g: 0, b: 0 };
-          osramFbEMA[i][0] = osramFbEMA[i][1] = osramFbEMA[i][2] = 0;
-        }
-        renderOsramPreview();
-        return;
-      }
-
-      osramAnimStart = performance.now();
-      // Reset EMA so transitions start clean
-      for (let i = 0; i < 64; i++) {
-        osramFbEMA[i][0] = osramFbEMA[i][1] = osramFbEMA[i][2] = 0;
-      }
-      osramAnimLoop();
-    }
-
-    function osramAnimLoop() {
-      const t = (performance.now() - osramAnimStart) / 1000;
-      // Compute linear RGB for each LED
-      for (const led of OSRAM_LEDS) {
-        const [r, g, b] = osramComputeColor(led, osramAnimMode, t);
-        // EMA smoothing
-        osramFbEMA[led.i][0] = EMA_ALPHA * r + (1 - EMA_ALPHA) * osramFbEMA[led.i][0];
-        osramFbEMA[led.i][1] = EMA_ALPHA * g + (1 - EMA_ALPHA) * osramFbEMA[led.i][1];
-        osramFbEMA[led.i][2] = EMA_ALPHA * b + (1 - EMA_ALPHA) * osramFbEMA[led.i][2];
-        // Apply display gamma 2.2 and convert to 8-bit for SVG fill
-        const rs = Math.max(0, Math.min(1, osramFbEMA[led.i][0]));
-        const gs = Math.max(0, Math.min(1, osramFbEMA[led.i][1]));
-        const bs = Math.max(0, Math.min(1, osramFbEMA[led.i][2]));
-        osramFb[led.i] = {
-          r: Math.round(Math.pow(rs, 1 / 2.2) * 255),
-          g: Math.round(Math.pow(gs, 1 / 2.2) * 255),
-          b: Math.round(Math.pow(bs, 1 / 2.2) * 255),
-        };
-      }
-      renderOsramPreview();
-      // ~30 fps cap to be battery-friendly
-      osramAnimRaf = setTimeout(() => requestAnimationFrame(osramAnimLoop), 33);
-    }
-
-    // ============================================================================
     // Init
     // ============================================================================
     window.addEventListener('load', () => {
       setStatus('', 'Disconnected — tap to connect');
       // Pre-init log only if VIOLA view is being shown
-      log('LED Module Controller v1.0 ready', 'ok');
+      log('LED Module Controller v1.4 ready', 'ok');
       log(`Service UUID: ${UART_SVC}`);
       if (!navigator.bluetooth) {
         log('Warning: Web Bluetooth unavailable in this browser', 'err');
