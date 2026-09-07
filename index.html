@@ -326,6 +326,7 @@
 
     .btn-secondary {
       background: #1a1a1a;
+      color: var(--text);
     }
 
     .grid-2 {
@@ -342,7 +343,9 @@
 
     /* ===== Color wheel (shared) ===== */
     #colorWheel,
-    #colorWheelOsram {
+    #colorWheelOsram,
+    #colorWheelL,
+    #colorWheelCmp3 {
       width: 220px;
       height: 220px;
       margin: 4px auto 8px;
@@ -457,6 +460,18 @@
     }
 
     /* ===== OSRAM-specific ===== */
+    .osram-preview-wrap {
+      background: #000;
+      border-radius: 10px;
+      padding: 18px;
+      overflow-x: auto;
+    }
+
+    .osram-preview-wrap svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
 
     .effect-grid {
       display: grid;
@@ -483,6 +498,12 @@
     }
 
     .effect-btn.active {
+      background: linear-gradient(180deg, var(--accent), var(--accent-dim));
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .calib-type-btn.active {
       background: linear-gradient(180deg, var(--accent), var(--accent-dim));
       border-color: var(--accent);
       color: white;
@@ -587,14 +608,54 @@
           <div class="meta">Device: x64 LED Driver</div>
         </button>
 
+        <button class="module-card" onclick="enterLApp()">
+          <div class="icon">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" preserveAspectRatio="xMidYMid meet">
+              <circle cx="20" cy="20" r="17" fill="none" stroke="#ff5e00" stroke-width="2.2" stroke-dasharray="3.2 3.2"
+                opacity="0.55" />
+              <circle cx="17" cy="7" r="1.6" fill="#ff5e00" />
+              <circle cx="9" cy="12" r="1.6" fill="#ff5e00" />
+              <circle cx="5" cy="20" r="1.6" fill="#ff5e00" />
+              <circle cx="9" cy="28" r="1.6" fill="#ff5e00" />
+              <circle cx="17" cy="33" r="1.6" fill="#ff5e00" />
+              <circle cx="16" cy="17" r="1.8" fill="#ff5e00" opacity="0.9" />
+              <circle cx="13" cy="23" r="1.8" fill="#ff5e00" opacity="0.9" />
+              <circle cx="15" cy="28" r="1.8" fill="#ff5e00" opacity="0.9" />
+              <circle cx="21" cy="29" r="1.8" fill="#ff5e00" opacity="0.9" />
+              <circle cx="27" cy="29" r="1.8" fill="#ff5e00" opacity="0.9" />
+            </svg>
+          </div>
+          <div class="title">OS-Logo Module</div>
+          <div class="subtitle">42 LEDs — new_block OSRAM logo panel (Rev.3.0). 8 built-in effects: Prologue,
+            Kaleidoscope, Equalizer, Candle, Water, Spiral Chase, Aurora, Fireworks.</div>
+          <div class="meta">Device: x64 LED Driver</div>
+        </button>
+
+        <button class="module-card" onclick="enterCmp3App()">
+          <div class="icon">
+            <svg width="56" height="28" viewBox="0 0 56 28" fill="none" preserveAspectRatio="xMidYMid meet">
+              <rect x="2" y="4" width="14" height="20" rx="1.5" fill="none" stroke="#ff5e00" stroke-width="1.4" />
+              <rect x="21" y="4" width="14" height="20" rx="1.5" fill="none" stroke="#ff5e00" stroke-width="1.4"
+                opacity="0.75" />
+              <rect x="40" y="4" width="14" height="20" rx="1.5" fill="none" stroke="#ff5e00" stroke-width="1.4"
+                opacity="0.5" />
+            </svg>
+          </div>
+          <div class="title">3-LED Comparison Board</div>
+          <div class="subtitle">60 LEDs, 3 LED types side-by-side (20 each). Aurora/Ocean/Flame + solid color for direct
+            visual comparison.</div>
+          <div class="meta">Device: x64 LED Driver</div>
+        </button>
+
       </div>
 
       <div class="footer">
-        ams OSRAM · LED Module Controller v1.4<br>
+        ams OSRAM · LED Module Controller v1.1<br>
         Web Bluetooth · Chrome / Edge required
       </div>
     </div>
   </div>
+
 
 
   <!-- ========================= VIOLA VIEW ========================= -->
@@ -616,6 +677,18 @@
           <span id="rgbText">R: 255 G: 94 B: 0</span>
           <div id="swatch" class="swatch" style="background:#ff5e00"></div>
         </div>
+        <div style="font-size:0.62rem; color:var(--text-faint); margin-top:10px; margin-bottom:4px;">
+          Or enter RGB directly (0–255 each):
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input type="number" id="rNumInput" min="0" max="255" value="255"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <input type="number" id="gNumInput" min="0" max="255" value="94"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <input type="number" id="bNumInput" min="0" max="255" value="0"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <button class="btn-primary" onclick="sendRgbNumeric()" style="flex:1; padding:8px;">Send</button>
+        </div>
       </div>
 
       <div class="card">
@@ -632,7 +705,7 @@
           <button onclick="setMode(3)">PASTEL</button>
           <button onclick="setMode(4)">FLOWER</button>
           <button onclick="setMode(5)">AURORA</button>
-          <button class="btn-secondary" onclick="setMode(0)">STATIC</button>
+          <button class="btn-secondary" onclick="sendWhite('viola')">WHITE</button>
         </div>
       </div>
 
@@ -675,6 +748,18 @@
           <span id="osramRgbText">R: 240 G: 70 B: 28</span>
           <div id="osramSwatch" class="swatch" style="background:#f0461c"></div>
         </div>
+        <div style="font-size:0.62rem; color:var(--text-faint); margin-top:10px; margin-bottom:4px;">
+          Or enter RGB directly (0–255 each):
+        </div>
+        <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+          <input type="number" id="osramRNumInput" min="0" max="255" value="240"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <input type="number" id="osramGNumInput" min="0" max="255" value="70"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <input type="number" id="osramBNumInput" min="0" max="255" value="28"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <button class="btn-primary" onclick="osramSendRgbNumeric()" style="flex:1; padding:8px;">Send</button>
+        </div>
       </div>
 
       <div class="card">
@@ -693,8 +778,8 @@
           <button class="effect-btn" data-mode="6" onclick="setMode(6)"><span class="num">06</span>FLAME</button>
         </div>
         <div style="display:flex; gap:8px; margin-top:10px;">
-          <button class="btn-secondary" onclick="setMode(0)"
-            style="flex:1; padding:10px; background:linear-gradient(180deg,#1f1f1f,#161616); border:1px solid #2a2a2a; color:var(--text); border-radius:10px; font-size:0.78rem; letter-spacing:1px;">STATIC</button>
+          <button class="btn-secondary" onclick="sendWhite('osram')"
+            style="flex:1; padding:10px; background:linear-gradient(180deg,#1f1f1f,#161616); border:1px solid #2a2a2a; color:var(--text); border-radius:10px; font-size:0.78rem; letter-spacing:1px;">WHITE</button>
           <button class="btn-danger" onclick="setMode(255)"
             style="flex:1; padding:10px; border-radius:10px; font-size:0.78rem; letter-spacing:1px;">OFF</button>
         </div>
@@ -711,32 +796,553 @@
     </div>
   </div>
 
+  <div class="view" id="lView">
+    <div class="container">
+
+      <div class="card">
+        <div class="label"><span>Connection</span><span id="lDevName" class="value">—</span></div>
+        <div class="grid-2">
+          <button id="lConnectBtn" class="btn-primary" onclick="connect('l')">CONNECT</button>
+          <button id="lDisconnectBtn" class="btn-danger" onclick="disconnect()" disabled>DISCONNECT</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Solid Color</span><span id="lColorHex" class="value">#F0461C</span></div>
+        <canvas id="colorWheelL"></canvas>
+        <div class="color-readout">
+          <span id="lRgbText">R: 240 G: 70 B: 28</span>
+          <div id="lSwatch" class="swatch" style="background:#f0461c"></div>
+        </div>
+        <div style="font-size:0.62rem; color:var(--text-faint); margin-top:10px; margin-bottom:4px;">
+          Or enter RGB directly (0–255 each):
+        </div>
+        <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+          <input type="number" id="lRNumInput" min="0" max="255" value="240"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <input type="number" id="lGNumInput" min="0" max="255" value="70"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <input type="number" id="lBNumInput" min="0" max="255" value="28"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <button class="btn-primary" onclick="lSendRgbNumeric()" style="flex:1; padding:8px;">Send</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Global Brightness</span><span id="lGccVal" class="value">0x40 (64/64)</span></div>
+        <input type="range" id="lGccRange" min="0" max="64" value="64" oninput="onGccChange(this.value)">
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Built-in Effects</span><span class="value">new_block (preview)</span></div>
+        <div class="effect-grid">
+          <button class="effect-btn" data-mode="1" onclick="setOsLogoEffectMode(1)"><span
+              class="num">01</span>PROLOGUE</button>
+          <button class="effect-btn" data-mode="2" onclick="setOsLogoEffectMode(2)"><span
+              class="num">02</span>KALEIDOSCOPE</button>
+          <button class="effect-btn" data-mode="3" onclick="setOsLogoEffectMode(3)"><span
+              class="num">03</span>EQUALIZER</button>
+          <button class="effect-btn" data-mode="4" onclick="setOsLogoEffectMode(4)"><span
+              class="num">04</span>CANDLE</button>
+          <button class="effect-btn" data-mode="5" onclick="setOsLogoEffectMode(5)"><span
+              class="num">05</span>WATER</button>
+          <button class="effect-btn" data-mode="6" onclick="setOsLogoEffectMode(6)"><span class="num">06</span>SPIRAL
+            CHASE</button>
+          <button class="effect-btn" data-mode="7" onclick="setOsLogoEffectMode(7)"><span
+              class="num">07</span>AURORA</button>
+          <button class="effect-btn" data-mode="8" onclick="setOsLogoEffectMode(8)"><span
+              class="num">08</span>FIREWORKS</button>
+        </div>
+        <div style="font-size:0.62rem; color:var(--text-faint); margin-top:10px;">
+          Runs on FW v3.15+. Older firmware: preview only, physical LEDs unchanged.
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn-secondary" onclick="sendWhite('l')"
+            style="flex:1; padding:10px; background:linear-gradient(180deg,#1f1f1f,#161616); border:1px solid #2a2a2a; color:var(--text); border-radius:10px; font-size:0.78rem; letter-spacing:1px;">WHITE</button>
+          <button class="btn-danger" onclick="setMode(255)"
+            style="flex:1; padding:10px; border-radius:10px; font-size:0.78rem; letter-spacing:1px;">OFF</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Debug Log</span>
+          <span class="value" style="cursor:pointer"
+            onclick="document.getElementById('log').innerHTML=''">[clear]</span>
+        </div>
+        <div class="log" id="logLRef"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="view" id="cmp3View">
+    <div class="container">
+
+      <div class="card">
+        <div class="label"><span>Connection</span><span id="cmp3DevName" class="value">—</span></div>
+        <div class="grid-2">
+          <button id="cmp3ConnectBtn" class="btn-primary" onclick="connect('cmp3')">CONNECT</button>
+          <button id="cmp3DisconnectBtn" class="btn-danger" onclick="disconnect()" disabled>DISCONNECT</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Solid Color</span><span id="cmp3ColorHex" class="value">#F0461C</span></div>
+        <canvas id="colorWheelCmp3"></canvas>
+        <div class="color-readout">
+          <span id="cmp3RgbText">R: 240 G: 70 B: 28</span>
+          <div id="cmp3Swatch" class="swatch" style="background:#f0461c"></div>
+        </div>
+        <div style="font-size:0.62rem; color:var(--text-faint); margin-top:10px; margin-bottom:4px;">
+          Or enter RGB directly (0–255 each):
+        </div>
+        <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+          <input type="number" id="cmp3RNumInput" min="0" max="255" value="240"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <input type="number" id="cmp3GNumInput" min="0" max="255" value="70"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <input type="number" id="cmp3BNumInput" min="0" max="255" value="28"
+            style="width:56px; padding:6px; border-radius:6px; border:1px solid #333; background:#161616; color:var(--text); text-align:center;">
+          <button class="btn-primary" onclick="cmp3SendRgbNumeric()" style="flex:1; padding:8px;">Send</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Global Brightness</span><span id="cmp3GccVal" class="value">0x40 (64/64)</span></div>
+        <input type="range" id="cmp3GccRange" min="0" max="64" value="64" oninput="onGccChange(this.value)">
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Built-in Effects</span><span class="value">No Logo1-3 (comparison board)</span></div>
+        <div class="effect-grid">
+          <button class="effect-btn" data-mode="4" onclick="setMode(4)"><span class="num">04</span>AURORA</button>
+          <button class="effect-btn" data-mode="5" onclick="setMode(5)"><span class="num">05</span>OCEAN</button>
+          <button class="effect-btn" data-mode="6" onclick="setMode(6)"><span class="num">06</span>FLAME</button>
+          <button class="effect-btn" data-mode="7" onclick="cmp3SetIntermittent()"><span
+              class="num">07</span>CHECKERBOARD</button>
+          <button class="effect-btn" onclick="sendWhite('cmp3')"><span class="num">08</span>WHITE</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn-danger" onclick="setMode(255)"
+            style="flex:1; padding:10px; border-radius:10px; font-size:0.78rem; letter-spacing:1px;">OFF</button>
+        </div>
+        <div style="font-size:0.62rem; color:var(--text-faint); margin-top:8px; text-align:center;">
+          Logo 1/2/3 intentionally omitted — brand animation doesn't fit an LED-type comparison board.
+          CHECKERBOARD alternates every other LED in a checkerboard pattern
+          and is
+          the only built-in effect here that follows live color-picker changes
+          while active; WHITE always unconditionally fills all 60 LEDs white,
+          regardless of what was running before it.
+          AURORA/OCEAN/FLAME ignore color changes while running.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>White Balance Calibration</span><span class="value">per group, saved on device</span>
+        </div>
+        <div style="font-size:0.62rem; color:var(--text-faint); margin-bottom:8px;">
+          The 3 LED types don't share the same white point. Pick a type (20 LEDs
+          each), tap White (or R/G/B to isolate a single channel) to light all
+          20 at a reference brightness (deliberately below full brightness so
+          gain has headroom to go both up and down), then nudge R/G/B until the
+          group visually matches the others on the board. The Global Brightness
+          slider above still applies to whatever is shown here.
+        </div>
+        <div style="display:flex; gap:6px; margin-bottom:10px;">
+          <button class="btn-secondary calib-type-btn" data-type="0" onclick="calibSelectType(0)"
+            style="flex:1; padding:10px;">Type A</button>
+          <button class="btn-secondary calib-type-btn" data-type="1" onclick="calibSelectType(1)"
+            style="flex:1; padding:10px;">Type B</button>
+          <button class="btn-secondary calib-type-btn" data-type="2" onclick="calibSelectType(2)"
+            style="flex:1; padding:10px;">Type C</button>
+        </div>
+        <div style="display:flex; gap:6px; margin-bottom:6px;">
+          <button class="btn-secondary" onclick="calibShowRed()"
+            style="flex:1; padding:10px; color:#ff6b6b; font-weight:bold;">R</button>
+          <button class="btn-secondary" onclick="calibShowGreen()"
+            style="flex:1; padding:10px; color:#6bff8f; font-weight:bold;">G</button>
+          <button class="btn-secondary" onclick="calibShowBlue()"
+            style="flex:1; padding:10px; color:#6bb8ff; font-weight:bold;">B</button>
+        </div>
+        <button class="btn-primary" onclick="calibShowWhite()"
+          style="width:100%; padding:10px; margin-bottom:10px;">White</button>
+        <div id="calibRows">
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px;">
+            <span style="width:14px; color:#ff6b6b; font-weight:bold;">R</span>
+            <button class="btn-secondary" onclick="calibNudge('r',-1)" style="padding:6px 12px;">−</button>
+            <span id="calibRVal" style="width:36px; text-align:center;">+0</span>
+            <button class="btn-secondary" onclick="calibNudge('r',1)" style="padding:6px 12px;">+</button>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px;">
+            <span style="width:14px; color:#6bff8f; font-weight:bold;">G</span>
+            <button class="btn-secondary" onclick="calibNudge('g',-1)" style="padding:6px 12px;">−</button>
+            <span id="calibGVal" style="width:36px; text-align:center;">+0</span>
+            <button class="btn-secondary" onclick="calibNudge('g',1)" style="padding:6px 12px;">+</button>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;">
+            <span style="width:14px; color:#6bb8ff; font-weight:bold;">B</span>
+            <button class="btn-secondary" onclick="calibNudge('b',-1)" style="padding:6px 12px;">−</button>
+            <span id="calibBVal" style="width:36px; text-align:center;">+0</span>
+            <button class="btn-secondary" onclick="calibNudge('b',1)" style="padding:6px 12px;">+</button>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-secondary" onclick="calibResetCurrent()" style="flex:1; padding:10px;">Reset This
+            Type</button>
+          <button class="btn-primary" onclick="calibSaveToDevice()" style="flex:1; padding:10px;">Save</button>
+        </div>
+        <div style="font-size:0.6rem; color:var(--text-faint); margin-top:8px;">
+          Gain range: −50% to +50% (multiplicative, not additive — an LED
+          that's off stays exactly off no matter the gain). R/G/B isolate one
+          channel at a time — handy when only one color is off. Changes apply
+          live to all 20 LEDs of the selected type but stay in RAM only until
+          you press Save — power-cycling before saving discards them.
+          This panel's shown values are session-local: switching type or
+          reconnecting resets the display to +0/+0/+0, but the device keeps
+          applying whatever was last saved regardless of what this panel shows.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label"><span>Debug Log</span>
+          <span class="value" style="cursor:pointer"
+            onclick="document.getElementById('log').innerHTML=''">[clear]</span>
+        </div>
+        <div class="log" id="logCmp3Ref"></div>
+      </div>
+
+    </div>
+  </div>
+
 
   <script>
     /* ============================================================================
-       Unified BLE LED Module Controller (v1.4 — for x64 LED Driver FW v3.2)
+       Unified BLE LED Module Controller (v1.23 — for x64 LED Driver FW v3.14)
        ----------------------------------------------------------------------------
-       Single-page app that hosts two modules:
-         - VIOLA (8×8 RGB matrix)
-         - OSRAM (64-LED letter panel)
+       Single-page app that hosts four modules:
+         - VIOLA  (8×8 RGB matrix)
+         - OSRAM  (64-LED letter panel)
+         - L-logo (46-LED ring + stroke panel) — password-gated on entry
+         - 3-LED Comparison Board (60 LEDs, 3 LED types × 20)
     
-       Both modules are driven by the SAME unified firmware ("x64 LED Driver"
-       FW v3.0) running on the SAME VIOLA Rev.2.1 driver board. The board has
+       v1.21 (2026-07-09) — Comparison Board Intermittent effect + calibration
+       single-color buttons (Ryoma's request):
+         - Added an INTERMITTENT built-in effect button (mode slot 07) to the
+           Comparison Board. It is entirely webapp-side — no new firmware mode
+           needed. It lights every other LED in a checkerboard pattern derived
+           from each LED's physical (x,y) grid position (10mm pitch:
+           (round(x/10)+round(y/10)) even = on), sent via plain 0x01 per-pixel
+           commands. Sending 0x01 already forces the firmware's currentMode
+           back to 0 (static) on OSRAM/L/CMP3, which is what stops a
+           previously-running Aurora/Ocean/Flame from continuing to overwrite
+           the pattern — no firmware change required.
+         - Gated color-picker input (wheel drag, numeric RGB Send, WHITE) on
+           the Comparison Board so that ONLY Intermittent (and plain solid/
+           manual mode, i.e. no built-in effect selected) react live to color
+           changes. While Aurora/Ocean/Flame is running, picker interactions
+           are now ignored instead of firing a one-frame sendSolid() that the
+           next effect tick immediately overwrote anyway. Tracked via the new
+           `cmp3EffectMode` state variable, set inside setMode()'s cmp3 branch
+           and by cmp3SetIntermittent().
+         - White Balance Calibration card: added R / G / B single-channel
+           test buttons alongside the existing Display (white) button.
+           calibDisplay() now takes an optional test color (defaults to the
+           last-used one, white 200,200,200 initially) instead of always
+           hard-coding white, so nudging gain while looking at "R" stays on
+           red. Brightness still follows the Global Brightness slider exactly
+           as before — GCC is a separate board-wide 0x03 command, independent
+           of which per-LED color is being displayed.
+    
+       v1.23 (2026-07-09) — BLE write serialization, Intermittent double-sweep
+       fix, WHITE unconditional fill (Ryoma's report):
+         - sendCmd() now routes every write through a single global promise
+           queue (bleSendQueue), so no two independent call chains (color
+           wheel drag, Intermittent's per-LED loop, Calibration's per-LED
+           loop, the Global Brightness slider) can interleave their BLE
+           writes. This is what caused Calibration to sometimes appear to
+           ignore Global Brightness changes — the 0x03 GCC command could get
+           buried mid-burst during a 20-LED calibration send and effectively
+           lost. Now every command is guaranteed to be sent, in order.
+         - cmp3ApplyIntermittent() already had a busy/queued coalescing guard
+           so a fast wheel drag collapses into a single trailing sweep instead
+           of stacking up overlapping ones — combined with the write queue
+           above, the reported "double bottom-to-top animation" on color
+           change is now fully deterministic (confirmed via simulation: 3
+           overlapping calls now produce exactly 2 sequential passes, never
+           interleaved writes).
+         - WHITE was wrongly folded into the "only Intermittent reacts to
+           color changes" gate added in v1.21/v1.22, so pressing WHITE while
+           Intermittent was active only re-colored the alternating "on" LEDs
+           instead of the whole board. WHITE is now a hard, unconditional
+           full 60-LED fill — it always works, regardless of what was running
+           before it (Aurora/Ocean/Flame/Intermittent) — and moved into the
+           effect-grid, immediately to the right of INTERMITTENT.
+         - calibShowWhite/Red/Green/Blue() now return calibDisplay()'s
+           promise instead of discarding it (harmless before, since nothing
+           awaited them, but makes the call chain properly awaitable).
+    
+       v1.25 (2026-07-10) — Comparison Board button renamed to ZIGZAG on
+       screen, and the actual cause of the double-sweep color-change bug
+       (Ryoma's report):
+         - The button previously labeled INTERMITTENT is now labeled ZIGZAG.
+           Internal function/variable names (cmp3SetIntermittent(),
+           CMP3_INTERMITTENT_ON/SET, cmp3EffectMode === 'intermittent', etc.)
+           were deliberately left unchanged — renaming those too would touch
+           many more call sites for zero user-facing benefit and more risk.
+         - v1.22–1.24 fixed racing/overlapping calls to
+           cmp3ApplyIntermittent(), but that wasn't the actual cause of the
+           still-reported "sweep plays twice on every tap": pickCmp3Color()
+           (fires on pointerdown/move) and onCmp3WheelUp() (fires on
+           pointerup) both call it for the SAME unchanged color on a simple
+           tap, back to back — two fully serialized, non-overlapping passes
+           that still visually look like the pattern sweeping twice.
+           cmp3ApplyIntermittent() now tracks the color of the currently
+           in-flight pass (cmp3ApplyInFlightColor) and the last COMPLETED
+           pass (cmp3LastAppliedColor); a request for a color that's already
+           running or already on the board is dropped instead of queued or
+           resent. onCmp3WheelUp() also switched from clearFirst=true to
+           clearFirst=false, since the "off" LEDs are already established at
+           activation and a tap/release never touches them.
+    
+       v1.32 (2026-08-04) — EQUALIZER gradient fix (Ryoma): neighboring LEDs
+       showed unrelated colors instead of a smooth gradient. RAINBOW_TURNS
+       2.0->1.0 (one smooth rainbow sweep across the radius instead of two,
+       so physically close LEDs now have close hues) and OUTWARD_SPEED
+       55->40 deg/sec (slower, more gradual outward scroll, matching "徐々
+       に外側に移動" — gradually moves outward). Matches FW v3.18.
+    
+       v1.31 (2026-08-04) — Second round of feedback from Ryoma's real-
+       hardware evaluation, effect-by-effect (matches FW v3.17):
+       EQUALIZER: rainbow palette (was green->red) driven by true radial
+       position (rNorm), with a continuous outward phase shift so rainbow
+       rings travel from center to edge over time; added per-LED fbm jitter
+       to the bar-extent threshold for a real multi-band-analyzer look
+       instead of one synchronized pulse. CANDLE: color-change speed
+       doubled (both brightness-flicker and hue fbm time-scales). WATER:
+       the ripple itself now shifts blue<->white (crest->near-white,
+       trough->deep blue) on top of the unchanged random white-flash
+       mechanic. PLASMA -> AURORA: replaced the custom 5-sine PLASMA
+       formula with a verbatim port of osramComputeColor()'s Aurora
+       (mode===4, perlin()-based), fed new_block's own xn/yn. FIREWORKS:
+       fixed "starts mid-explosion" — the -FW_LOOP wraparound (for bursts
+       spanning a loop boundary) used to fire even at dt=0 as if a phantom
+       previous loop had happened; now only allowed once a real loop has
+       elapsed. Applied the same fix to WATER's sparkle wraparound
+       defensively (same latent issue, not reported).
+    
+       v1.30 (2026-08-04) — Fixes from Ryoma's first real-hardware evaluation
+       of new_block (OS-Logo, FW v3.15). EQUALIZER: was repeating the exact
+       same ~14.5s pattern every loop, felt static — added a 4-loop (~58s)
+       build/peak/breakdown/peak SECTION_ENERGY[] cycle (modulates
+       extent+brightness) plus a slow 47°/loop hue drift, matching FW v3.16's
+       renderEffect_OSLOGO(). SPIRAL CHASE: color-change timing sped up 50%
+       (hue rotation 30->45 deg/sec); chase movement speed (SC_LEG_TIME)
+       unchanged. The R<->B channel swap Ryoma also reported (PROLOGUE/
+       CANDLE/WATER showing wrong colors) is a real-hardware wiring issue —
+       fixed in FW v3.16's flushFrame_LOGO() (MODULE_L only), NOT here: it
+       isn't a color-formula bug, osLogoComputeColor() below computes the
+       colors correctly, something downstream on the physical board sends R
+       and B to each other's LED die. No webapp change needed for that one.
+    
+       v1.29 (2026-08-04) — OS-Logo Module: removed the Live Preview card
+       (SVG of physical LED positions + tap-to-set-color) per Ryoma's request.
+       renderLPreview() kept as a guarded no-op (returns immediately if
+       $('lPreview') is missing) rather than removing it, since lAnimLoop()/
+       startLPreviewAnimation() and other call sites still call it — cheaper
+       and lower-risk than threading a "preview exists?" check through every
+       caller. Also renamed effect 1's button label CONVERGE → PROLOGUE
+       (display-only; internal names — effectId 1, "CONVERGE FLASH" in code
+       comments/osLogoComputeColor(), OSLOGO_EFFECT1_TOTAL, etc. — unchanged).
+    
+       v1.28 (2026-08-03) — new_block (OS-Logo) real implementation: L_LEDS
+       swapped from the old 46-LED L-logo placeholder to new_block's actual
+       42-LED data (new_block_sw_cs_layered.csv), plus osLogoComputeColor()
+       — a full JS port of new_block_lighting_algorithm_spec.md's 8 effects
+       (CONVERGE FLASH/KALEIDOSCOPE/EQUALIZER/CANDLE/WATER/SPIRAL CHASE/
+       PLASMA/FIREWORKS), replacing L-Logo's reuse of osramComputeColor().
+       setOsLogoEffectMode() sends BLE 0x05 (matching FW v3.15's new
+       renderEffect_OSLOGO() engine, MODULE_L-only — see
+       x64_LED_Driver_Firmware_v3_15.ino). Fixed the "clicking OS-Logo does
+       nothing" bug from v1.27: the L-Logo launcher card's password gate
+       (promptLLogoAccess(), a prompt() dialog) doesn't fire in this preview
+       environment; card now wired directly to enterLApp() like the other
+       three modules.
+    
+       v1.27 (2026-08-03) — Launcher card renamed: "L-Logo Module" → "OS-Logo
+       Module" (Ryoma's request, ahead of the new_block 42-LED implementation
+       work). Display-only rename: launcher card title, password-prompt text,
+       modulePill/moduleSubtitle strings, and log messages now say "OS-Logo"
+       instead of "L-Logo". Internal names (enterLApp(), promptLLogoAccess(),
+       lLogoPassword, L_LEDS, lView, lAnimRaf, logLRef, lDevName, BLE module
+       byte 2, etc.) are unchanged — this module still runs the old 46-LED
+       L_LEDS geometry/engine as-is. Swapping in the actual new_block 42-LED
+       data/effects is separate, not-yet-started work per the FW/Webapp
+       handoff doc.
+    
+       v1.26 (2026-07-10) — Comparison Board button renamed again, ZIGZAG →
+       CHECKERBOARD (Ryoma's preference — more accurate to the actual pattern
+       than ZIGZAG, which implies a diagonal path rather than an alternating
+       checkerboard). Display text and log messages only; internal names
+       (cmp3SetIntermittent(), CMP3_INTERMITTENT_ON/SET, etc.) unchanged.
+    
+       Note on FW v3.14: fixed a firmware-side bug where calibration gain was
+       clamped to (0,63) instead of the true 8-bit (0,255) PWM range, which
+       made +/-10% gain adjustments look like they did nothing (base
+       brightness was already >=63, so everything saturated to a constant 63
+       regardless of gain). No webapp changes were needed for this fix — see
+       the firmware changelog for the full explanation.
+    
+       v1.20 (2026-07-05) — calibration headroom fix:
+         - Ryoma reported White Balance gain adjustments having no visible
+           effect. Cause: calibDisplay() tested against full 255,255,255,
+           which the firmware quantizes to the max PWM value (63/63) on all
+           3 channels already — a POSITIVE gain has nowhere to go (clamped
+           right back to 63), so only decreasing ever showed any change.
+           Fixed by testing against a sub-maximum reference white (200,200,200)
+           instead, leaving headroom in both directions.
+    
+       v1.19 (2026-07-05) — calibration bug fix (matches FW v3.13):
+         - Ryoma reported Type A staying faintly lit purple after pressing OFF.
+           Root cause was firmware-side (v3.12's calibration was an additive
+           PWM offset, so 0 [off] + offset != 0) — see firmware changelog.
+           Webapp-side: relabeled the calibration panel from an "offset" to a
+           "gain" (−50% to +50%, multiplicative) to match the fix, and
+           tightened the nudge-button range from ±63 to ±50 accordingly.
+    
+       v1.18 (2026-07-05):
+         - Removed the FILL ALL / CLEAR buttons from OSRAM and L-logo too
+           (matches the Comparison Board change from v1.17).
+         - Trimmed the "(keeps setting after power-off)" text from the
+           Comparison Board's Save button — just "Save" now.
+         - L-Logo Module launcher card now prompts for a password before
+           entering (default: 38967). Client-side convenience gate only, not
+           real security — just prevents casual access from the launcher.
+           Only L-Logo is gated; the other three modules are unaffected.
+    
+       v1.17 (2026-07-05) — Comparison Board follow-up fixes:
+         - Restored smooth live/sequential color-change while dragging on the
+           color wheel: sends are now throttled (~25/s) instead of firing on
+           every single pointermove, which could flood the BLE link on a fast
+           drag and make the response feel delayed/choppy. The exact release
+           color is always sent once more on pointerup, so throttling never
+           causes the final color to be lost.
+         - Removed the FILL ALL / CLEAR buttons below the numeric RGB/Send row
+           (redundant now that the wheel and Send both auto-fill; OFF in the
+           Effects card still clears the board).
+         - Fixed .btn-secondary's missing text color (was falling back to the
+           browser default, often black-on-black against its dark background)
+           — root cause of "black button, invisible text" app-wide, not just
+           on the Comparison Board.
+         - Centered the R/G/B calibration nudge rows horizontally.
+    
+       v1.15 (2026-07-05) — webapp UX pass (Ryoma's request list):
+         - STATIC button renamed WHITE on all 4 modules: now explicitly sets
+           the wheel-CENTER color (RGB 255,255,255, i.e. saturation=0 in the
+           HSV wheel) and moves the wheel's marker there, instead of just
+           holding whatever color happened to be selected.
+         - 8x8 Matrix: added direct numeric R/G/B entry (0-255 each, clamped)
+           + Send button, next to the existing color wheel.
+         - OSRAM / L-logo / 3-LED Comparison wheels now auto-fill on pick,
+           matching the 8x8 Matrix's wheel design (previously required a
+           separate FILL ALL press or LED tap).
+         - Removed the Live Preview (physical LED map) from OSRAM and the
+           3-LED Comparison Board per request. L-logo's preview is unchanged.
+         - Added per-LED White Balance Calibration to the 3-LED Comparison
+           Board (the 3 LED types don't share the same white point): pick an
+           LED index, Display lights it at calibrated white, R/G/B nudge
+           buttons fine-tune, Save persists to the ESP32's flash (NVS) via
+           new BLE commands 0x20/0x21 (FW v3.12) so it survives power cycles.
+    
+       v1.16 (2026-07-05) — follow-up fixes:
+         - Added numeric R/G/B entry + Send (matching the 8x8 Matrix design)
+           to OSRAM, L-logo, and the 3-LED Comparison Board — the previous
+           pass only made the wheel auto-fill, which wasn't the whole ask.
+         - White Balance Calibration changed from per-LED (60 entries) to
+           per-TYPE (3 groups of 20) on the Comparison Board, per request.
+           Display/nudge/reset now apply to all 20 LEDs of the selected type
+           in one action; BLE 0x20 is still sent once per LED under the hood
+           (firmware calibration storage itself is unchanged, still per-LED —
+           this is a webapp-side convenience, not a firmware protocol change).
+         - App display language is English-only, strictly going forward.
+           Removed the Japanese UI strings introduced in v1.15's calibration
+           card (source comments may still be bilingual; only user-visible
+           UI text is in scope for this rule).
+    
+       v1.14 (2026-07-05): L_LEDS sw/cs fields updated to match FW v3.11's full
+       redesign (SW=8 angular sectors [0 ROW crossings], CS=annealing-optimized
+       position-within-sector [33 COL crossings, down from 82], 11 of those
+       crossings resolved via 22 vias — see firmware changelog). Ryoma chose
+       to prioritize crossing-minimization over D0-45 contiguity, so refdes
+       now spans D0-D60 with gaps. Physical (x,y), idx order, and sNorm are
+       unchanged.
+    
+       v1.13 (2026-07-05): L_LEDS sw/cs fields updated to match FW v3.10's fix
+       for the D53 gap (one stroke LED moved from sector cs=5 to the
+       previously-empty sector cs=6, so every sector needs sw<=5 and all 46
+       refdes land exactly in D0-D45, contiguous — Ryoma's request). Physical
+       (x,y), idx order, and sNorm are unchanged.
+    
+       v1.12 (2026-07-05): L_LEDS sw/cs fields updated to match FW v3.9's
+       transposed SW/CS assignment (Ryoma found v3.8 still hard to route;
+       swapping sw/cs roles — cs=angular sector, sw=position-within-sector —
+       routes more easily). Physical (x,y), idx order, and sNorm are all
+       unchanged; only sw/cs metadata (not used for rendering) was updated.
+    
+       v1.11 (2026-07-05): L_LEDS sw/cs fields updated to match FW v3.8's
+       polar-grid SW/CS reassignment (fixes an unroutable PCB — see firmware
+       changelog for full rationale). Physical (x,y) positions, idx order,
+       and sNorm (Logo1 stroke-sweep order) are ALL UNCHANGED — only which
+       (sw,cs)/refdes each idx maps to changed, so this preview's on-screen
+       appearance and animations are visually identical to v1.10; only the
+       underlying sw/cs metadata (not used for rendering) was corrected.
+    
+       All modules are driven by the SAME unified firmware ("x64 LED Driver"
+       FW v3.12) running on the SAME VIOLA Rev.3.0 driver board. The board has
        no idea which LED panel is physically connected — the user tells the
-       firmware via the Web App, which sends [0x10][module] (0=VIOLA, 1=OSRAM)
-       right after the BLE link is established. The firmware boots in
-       MODULE_NONE state and rejects all draw commands (notifying 0xB1 0xE0)
-       until 0x10 is received.
+       firmware via the Web App, which sends [0x10][module]
+       (0=VIOLA, 1=OSRAM, 2=L-logo, 3=Comparison) right after the BLE link is
+       established. The firmware boots in MODULE_NONE state and rejects all
+       draw commands (notifying 0xB1 0xE0) until 0x10 is received.
     
-       Both modules use the same BLE Service UUID (Nordic UART-compatible).
-       The only meaningful protocol difference is the per-pixel command (0x01):
+       v1.10 (2026-07-05): Added 3-LED Comparison Board module. LED_TABLE_CMP3
+       validated against Ryoma's compare_assigned_rev30.csv (Drefnum=sw*8+cs
+       invariant 60/60 match, spare cells match, block sizes 20/20/20 match).
+       Per Ryoma's choice, this module offers ONLY Aurora/Ocean/Flame (modes
+       4/5/6) + solid-color/static/off — no Logo1/2/3 buttons, since the
+       brand-orange convergence animation doesn't fit a side-by-side LED-type
+       comparison board. Reuses osramComputeColor() unmodified, same as L-logo.
     
-         VIOLA: [0x01][x][y][R][G][B]    (8×8 grid coords)
-         OSRAM: [0x01][idx][R][G][B]     (linear LED index 0..63)
+       v1.9 (2026-07-05): Added L-logo module. It reuses the OSRAM module's
+       entire coordinate-based effect engine unmodified (osramComputeColor()
+       only reads led.xn/yn/sNorm/i — genuinely LED-shape-agnostic), with its
+       own L_LEDS data (46 entries, ring grp:0 / stroke grp:1), its own bbox
+       normalisation (L_XMIN/XMAX/YMIN/YMAX), and sNorm = i/(N-1) — a SINGLE
+       continuous stroke path (ring loop → into the "L"), per Ryoma's design
+       choice, rather than OSRAM's per-letter parallel sweep. Added lView,
+       L color wheel, L preview SVG/animation loop, and a greyed-out launcher
+       card for the reserved 3-LED Comparison Board module.
+    
+       v1.8 (2026-06-29): OSRAM_LEDS regenerated for Case A (row-major refdes,
+       D[i] = (col=i%8, row=i//8) — same rule as VIOLA E1515 LED board). The
+       physical (x_mm, y_mm) and letter of each OSRAM LED are unchanged from
+       v1.7, but the idx label of each LED is reassigned to match the new
+       OSRAM PCB which is a refdes-compatible derivative of the VIOLA LED
+       board. BLE 0x01 [idx][R][G][B] now uses the new idx mapping; FW v3.5
+       and webapp v1.8 are synchronised.
+    
+       All logo-style modules share the same BLE Service UUID (Nordic
+       UART-compatible) and per-pixel command shape:
+    
+         VIOLA:  [0x01][x][y][R][G][B]    (8×8 grid coords)
+         OSRAM:  [0x01][idx][R][G][B]     (linear LED index 0..63)
+         L-logo: [0x01][idx][R][G][B]     (linear LED index 0..45)
+         Cmp3:   [0x01][idx][R][G][B]     (linear LED index 0..59)
     
        Notifications:
          [0xB0][mv_hi][mv_lo]   battery telemetry, every 5 s
          [0xB1][code]           fault — 0xE0 = NO_MODULE_SELECTED (auto-recovered)
+                                         0xE1 = NOT_IMPLEMENTED (unused as of v1.10;
+                                                kept for future reserved modules)
          [0xB2][module]         module-selection ACK
        ============================================================================ */
 
@@ -760,6 +1366,22 @@
       $('backBar').classList.remove('show');
       $('moduleSubtitle').textContent = 'LED Module Controller';
       $('statusBar').style.display = connected ? 'flex' : 'none';
+      // Stop any OSRAM/L preview animation when leaving the module
+      if (osramAnimRaf) {
+        cancelAnimationFrame(osramAnimRaf);
+        clearTimeout(osramAnimRaf);
+        osramAnimRaf = null;
+      }
+      if (typeof lAnimRaf !== 'undefined' && lAnimRaf) {
+        cancelAnimationFrame(lAnimRaf);
+        clearTimeout(lAnimRaf);
+        lAnimRaf = null;
+      }
+      if (typeof cmp3AnimRaf !== 'undefined' && cmp3AnimRaf) {
+        cancelAnimationFrame(cmp3AnimRaf);
+        clearTimeout(cmp3AnimRaf);
+        cmp3AnimRaf = null;
+      }
       // Don't disconnect; if user re-enters same module they're still connected
     }
 
@@ -782,6 +1404,25 @@
       initVIOLAWheel();
     }
 
+    function enterCmp3App() {
+      activeModule = 'cmp3';
+      setView('cmp3');
+      $('backBar').classList.add('show');
+      $('modulePill').textContent = 'Comparison · 60 LEDs';
+      $('moduleSubtitle').textContent = '3-LED Comparison Board';
+      $('statusBar').style.display = 'flex';
+      if (!connected) {
+        setStatus('', 'Disconnected — tap to connect');
+      }
+      initCmp3Wheel();
+      renderCmp3Preview();
+      currentColor = { r: 240, g: 70, b: 28 };
+      updateCmp3ColorUI();
+      cmp3EffectMode = null;
+      document.querySelectorAll('#cmp3View .effect-btn').forEach(b => b.classList.remove('active'));
+      calibSelectType(0);
+    }
+
     function enterOsramApp() {
       activeModule = 'osram';
       setView('osram');
@@ -794,9 +1435,44 @@
       }
       // Initialize OSRAM-specific UI
       initOSRAMWheel();
+      renderOsramPreview();
       // Default OSRAM color is brand orange
       currentColor = { r: 240, g: 70, b: 28 };
       updateOsramColorUI();
+    }
+
+    // ============================================================================
+    // L-Logo Module — password gate on entry only (default password: 38967).
+    // Client-side convenience gate, not real security — just prevents casual
+    // access to this module from the launcher.
+    // ============================================================================
+    let lLogoPassword = '38967';
+    function promptLLogoAccess() {
+      const input = prompt('Enter password to access the OS-Logo Module:');
+      if (input === null) return;   // cancelled
+      if (input === lLogoPassword) {
+        enterLApp();
+      } else {
+        alert('Incorrect password.');
+      }
+    }
+
+    function enterLApp() {
+      activeModule = 'l';
+      setView('l');
+      $('backBar').classList.add('show');
+      $('modulePill').textContent = 'OS-Logo · 42 LEDs';
+      $('moduleSubtitle').textContent = 'OS-Logo Module';
+      $('statusBar').style.display = 'flex';
+      if (!connected) {
+        setStatus('', 'Disconnected — tap to connect');
+      }
+      // Initialize L-specific UI (shares the OSRAM-style coordinate-based engine)
+      initLWheel();
+      renderLPreview();
+      // Default color is brand orange, same convention as OSRAM
+      currentColor = { r: 240, g: 70, b: 28 };
+      updateLColorUI();
     }
 
     // ============================================================================
@@ -806,11 +1482,15 @@
       // Find whichever log element is currently visible
       const elV = $('log');
       const elO = $('logOsramRef');
+      const elL = $('logLRef');
+      const elC = $('logCmp3Ref');
       const t = new Date().toLocaleTimeString();
       const cls = kind ? ` class="${kind}"` : '';
       const line = `<div${cls}>[${t}] ${msg}</div>`;
       if (elV) { elV.innerHTML += line; elV.scrollTop = elV.scrollHeight; }
       if (elO) { elO.innerHTML += line; elO.scrollTop = elO.scrollHeight; }
+      if (elL) { elL.innerHTML += line; elL.scrollTop = elL.scrollHeight; }
+      if (elC) { elC.innerHTML += line; elC.scrollTop = elC.scrollHeight; }
     }
 
     // ============================================================================
@@ -819,16 +1499,24 @@
     function setStatus(state, text) {
       $('statusDot').className = 'dot ' + state;
       $('statusText').textContent = text;
-      // Update both module's connect/disconnect buttons
+      // Update each module's connect/disconnect buttons
       const violaConnect = $('violaConnectBtn');
       const violaDisc = $('violaDisconnectBtn');
       const osramConnect = $('osramConnectBtn');
       const osramDisc = $('osramDisconnectBtn');
+      const lConnect = $('lConnectBtn');
+      const lDisc = $('lDisconnectBtn');
+      const cmp3Connect = $('cmp3ConnectBtn');
+      const cmp3Disc = $('cmp3DisconnectBtn');
       const isBusy = (state === 'connecting' || state === 'connected');
       if (violaConnect) violaConnect.disabled = isBusy;
       if (osramConnect) osramConnect.disabled = isBusy;
+      if (lConnect) lConnect.disabled = isBusy;
+      if (cmp3Connect) cmp3Connect.disabled = isBusy;
       if (violaDisc) violaDisc.disabled = (state !== 'connected');
       if (osramDisc) osramDisc.disabled = (state !== 'connected');
+      if (lDisc) lDisc.disabled = (state !== 'connected');
+      if (cmp3Disc) cmp3Disc.disabled = (state !== 'connected');
     }
 
     // ============================================================================
@@ -844,7 +1532,8 @@
       // panels. Module is selected at runtime by sending [0x10][module] after
       // connecting. moduleType ('viola' | 'osram') determines which 0x10 we send.
       const devNamePrefix = 'x64 LED Driver';
-      const moduleByte = (moduleType === 'osram') ? 0x01 : 0x00;
+      const moduleByte = (moduleType === 'osram') ? 0x01 : (moduleType === 'l') ? 0x02 :
+        (moduleType === 'cmp3') ? 0x03 : 0x00;
       try {
         setStatus('connecting', `Scanning for ${devNamePrefix}...`);
         log(`Requesting ${devNamePrefix} device for module=${moduleType}...`);
@@ -852,7 +1541,9 @@
           filters: [{ namePrefix: devNamePrefix }, { services: [UART_SVC] }],
           optionalServices: [UART_SVC]
         });
-        const devNameEl = (moduleType === 'osram') ? $('osramDevName') : $('violaDevName');
+        const devNameEl = (moduleType === 'osram') ? $('osramDevName') :
+          (moduleType === 'l') ? $('lDevName') :
+            (moduleType === 'cmp3') ? $('cmp3DevName') : $('violaDevName');
         if (devNameEl) devNameEl.textContent = device.name || '(unnamed)';
         log(`Found: ${device.name || '(unnamed)'}`);
         device.addEventListener('gattserverdisconnected', onDisconnected);
@@ -870,12 +1561,14 @@
         setStatus('connected', `Connected — ${device.name || devNamePrefix}`);
         log('Connection established. Notifications subscribed.', 'ok');
 
-        // ★ Unified FW v3.0: send module selection (0x10) before any drawing
+        // ★ Unified FW v3.0+: send module selection (0x10) before any drawing
         //    The FW boots in MODULE_NONE state and rejects all draw commands
         //    until it receives [0x10][module]. The FW responds with [0xB2][module]
         //    on success; we wait briefly so subsequent commands aren't racy.
         await sendCmd([0x10, moduleByte]);
-        log(`Sent module-select 0x10 ${moduleByte === 0 ? 'VIOLA' : 'OSRAM'}`, 'ok');
+        const moduleLabel = moduleByte === 0 ? 'VIOLA' : moduleByte === 1 ? 'OSRAM' :
+          moduleByte === 2 ? 'OS-Logo' : '3-LED Comparison';
+        log(`Sent module-select 0x10 ${moduleLabel}`, 'ok');
         await new Promise(r => setTimeout(r, 50));
 
         // Sync current GCC to FW
@@ -899,6 +1592,8 @@
       $('battReadout').style.color = '#888';
       const dv = $('violaDevName'); if (dv) dv.textContent = '—';
       const do_ = $('osramDevName'); if (do_) do_.textContent = '—';
+      const dl = $('lDevName'); if (dl) dl.textContent = '—';
+      const dc = $('cmp3DevName'); if (dc) dc.textContent = '—';
       log('Disconnected from device', 'err');
     }
 
@@ -928,8 +1623,11 @@
         if (code === 0xE0) {
           log('RX fault 0xE0 NO_MODULE_SELECTED — sending 0x10 to recover', 'err');
           // Auto-recover: re-send module selection based on activeModule
-          const recoveryByte = (activeModule === 'osram') ? 0x01 : 0x00;
+          const recoveryByte = (activeModule === 'osram') ? 0x01 : (activeModule === 'l') ? 0x02 :
+            (activeModule === 'cmp3') ? 0x03 : 0x00;
           sendCmd([0x10, recoveryByte]);
+        } else if (code === 0xE1) {
+          log('RX fault 0xE1 NOT_IMPLEMENTED — module recognised but LED_TABLE not yet supplied', 'err');
         } else {
           log(`RX fault 0x${code.toString(16).padStart(2, '0')}`, 'err');
         }
@@ -939,7 +1637,8 @@
       // 0xB2 [module] — module selection ACK (2 bytes)
       if (tag === 0xB2 && v.byteLength >= 2) {
         const module = v.getUint8(1);
-        const name = module === 0 ? 'VIOLA (8x8)' : module === 1 ? 'OSRAM (logo)' : 'unknown';
+        const name = module === 0 ? 'VIOLA (8x8)' : module === 1 ? 'OSRAM (logo)' :
+          module === 2 ? 'OS-Logo (42 LEDs)' : module === 3 ? '3-LED Comparison (60 LEDs)' : 'unknown';
         log(`RX module ACK: ${name}`, 'ok');
         return;
       }
@@ -947,21 +1646,40 @@
 
     // ============================================================================
     // BLE: Command wrapper
+    // ----------------------------------------------------------------------------
+    // v1.22: all writes go through a single global queue (`bleSendQueue`).
+    // Previously, several independent call chains could each be awaiting their
+    // own sequence of writeValueWithoutResponse() calls at the same time —
+    // e.g. the Comparison Board's Intermittent per-LED loop, Calibration's
+    // per-LED loop, and the Global Brightness slider's oninput handler are all
+    // separate async chains that the event loop can freely interleave. That
+    // race is what caused the Intermittent color-change "chatters" (a second
+    // overlapping sweep sometimes starting before the first one finished) and
+    // the Global Brightness slider sometimes appearing to have no effect while
+    // a Calibration color was mid-send. Routing every call through one
+    // promise-chain queue guarantees writes are issued one at a time, in the
+    // order they were requested, no matter which feature issued them.
     // ============================================================================
+    let bleSendQueue = Promise.resolve();
     async function sendCmd(bytes) {
-      if (!connected || !rxChar) {
-        log('Not connected — cannot send', 'err');
-        return false;
-      }
-      try {
-        await rxChar.writeValueWithoutResponse(new Uint8Array(bytes));
-        const hex = bytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
-        log(`TX: ${hex}`, 'tx');
-        return true;
-      } catch (e) {
-        log(`Send error: ${e.message}`, 'err');
-        return false;
-      }
+      const run = async () => {
+        if (!connected || !rxChar) {
+          log('Not connected — cannot send', 'err');
+          return false;
+        }
+        try {
+          await rxChar.writeValueWithoutResponse(new Uint8Array(bytes));
+          const hex = bytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
+          log(`TX: ${hex}`, 'tx');
+          return true;
+        } catch (e) {
+          log(`Send error: ${e.message}`, 'err');
+          return false;
+        }
+      };
+      const result = bleSendQueue.then(run, run);
+      bleSendQueue = result.then(() => { }, () => { });
+      return result;
     }
 
     // ============================================================================
@@ -970,31 +1688,399 @@
     async function clearAll() { await sendCmd([0x02]); }
     async function sendGcc(g) { await sendCmd([0x03, g & 0x7F]); }
     async function sendSolid(r, g, b) { await sendCmd([0x04, r & 0xff, g & 0xff, b & 0xff]); }
+
+    // ============================================================================
+    // 8x8 Matrix — direct numeric RGB entry (0-255 each) + Send button
+    // ============================================================================
+    function clampByte(v) {
+      v = parseInt(v, 10);
+      if (isNaN(v)) v = 0;
+      return Math.max(0, Math.min(255, v));
+    }
+    async function sendRgbNumeric() {
+      const r = clampByte($('rNumInput').value);
+      const g = clampByte($('gNumInput').value);
+      const b = clampByte($('bNumInput').value);
+      $('rNumInput').value = r; $('gNumInput').value = g; $('bNumInput').value = b;
+      currentColor = { r, g, b };
+      updateViolaColorUI();
+      document.querySelectorAll('#violaView .effect-btn').forEach(b => b.classList.remove('active'));
+      await sendSolid(r, g, b);
+    }
+    async function osramSendRgbNumeric() {
+      const r = clampByte($('osramRNumInput').value);
+      const g = clampByte($('osramGNumInput').value);
+      const b = clampByte($('osramBNumInput').value);
+      $('osramRNumInput').value = r; $('osramGNumInput').value = g; $('osramBNumInput').value = b;
+      currentColor = { r, g, b };
+      updateOsramColorUI();
+      document.querySelectorAll('#osramView .effect-btn').forEach(btn => btn.classList.remove('active'));
+      await osramFill();
+    }
+    async function lSendRgbNumeric() {
+      const r = clampByte($('lRNumInput').value);
+      const g = clampByte($('lGNumInput').value);
+      const b = clampByte($('lBNumInput').value);
+      $('lRNumInput').value = r; $('lGNumInput').value = g; $('lBNumInput').value = b;
+      currentColor = { r, g, b };
+      updateLColorUI();
+      document.querySelectorAll('#lView .effect-btn').forEach(btn => btn.classList.remove('active'));
+      await lFill();
+    }
+    async function cmp3SendRgbNumeric() {
+      const r = clampByte($('cmp3RNumInput').value);
+      const g = clampByte($('cmp3GNumInput').value);
+      const b = clampByte($('cmp3BNumInput').value);
+      $('cmp3RNumInput').value = r; $('cmp3GNumInput').value = g; $('cmp3BNumInput').value = b;
+      currentColor = { r, g, b };
+      updateCmp3ColorUI();
+      // Only Intermittent / plain solid mode react to color changes — see
+      // cmp3EffectMode note above cmp3SetIntermittent().
+      if (cmp3EffectMode === 'intermittent') {
+        await cmp3ApplyIntermittent(true);
+        return;
+      }
+      if (cmp3EffectMode !== null) {
+        log('Color change ignored — AURORA/OCEAN/FLAME is running (only CHECKERBOARD/solid accept color changes)', 'tx');
+        return;
+      }
+      document.querySelectorAll('#cmp3View .effect-btn').forEach(btn => btn.classList.remove('active'));
+      await cmp3Fill();
+    }
+
+    // ============================================================================
+    // White button — replaces the old STATIC button on all 4 modules. Sends the
+    // color at the exact CENTER of that module's color wheel (saturation=0 in
+    // the HSV wheel => pure white, RGB 255,255,255), updates the wheel's marker
+    // to the center, and fills the whole panel/board with it.
+    // ============================================================================
+    async function sendWhite(moduleKey) {
+      currentColor = { r: 255, g: 255, b: 255 };
+      let wheel, cache, dpr, geom, updateUI, fillFn, viewSel;
+      switch (moduleKey) {
+        case 'viola':
+          wheel = violaWheel; cache = violaWheelCache; dpr = violaWheelDpr; geom = violaWheelGeom;
+          updateUI = updateViolaColorUI; fillFn = () => sendSolid(255, 255, 255);
+          viewSel = '#violaView'; break;
+        case 'osram':
+          wheel = osramWheel; cache = osramWheelCache; dpr = osramWheelDpr; geom = osramWheelGeom;
+          updateUI = updateOsramColorUI; fillFn = osramFill;
+          viewSel = '#osramView'; break;
+        case 'l':
+          wheel = lWheel; cache = lWheelCache; dpr = lWheelDpr; geom = lWheelGeom;
+          updateUI = updateLColorUI; fillFn = lFill;
+          viewSel = '#lView'; break;
+        case 'cmp3':
+          wheel = cmp3Wheel; cache = cmp3WheelCache; dpr = cmp3WheelDpr; geom = cmp3WheelGeom;
+          updateUI = updateCmp3ColorUI; fillFn = cmp3Fill;
+          viewSel = '#cmp3View'; break;
+        default: return;
+      }
+      updateUI();
+      if (wheel && cache) {
+        drawWheelOverlay(wheel, cache, dpr, { x: geom.cx, y: geom.cy });
+      }
+      // v1.23: WHITE is a hard, unconditional "light every LED white" action —
+      // it must always work, including right after Intermittent/Aurora/Ocean/
+      // Flame. It is NOT part of the color-picker gating (that gating is only
+      // for the wheel drag / numeric RGB Send, which are genuinely ambiguous
+      // about which color they should apply while a built-in effect is
+      // running). Previously WHITE was folded into that same gate, so pressing
+      // WHITE while Intermittent was active only re-colored the alternating
+      // "on" LEDs instead of filling the whole board — that was the bug.
+      if (moduleKey === 'cmp3') {
+        if (typeof cmp3AnimRaf !== 'undefined' && cmp3AnimRaf) {
+          cancelAnimationFrame(cmp3AnimRaf);
+          clearTimeout(cmp3AnimRaf);
+          cmp3AnimRaf = null;
+        }
+        cmp3EffectMode = null;
+      }
+      document.querySelectorAll(`${viewSel} .effect-btn`).forEach(b => b.classList.remove('active'));
+      await fillFn();
+    }
     async function setMode(modeId) {
+      // Send BLE command if connected (silent failure otherwise — preview still runs)
       if (connected && rxChar) {
         await sendCmd([0x05, modeId & 0xff]);
+      } else if (activeModule === 'osram' || activeModule === 'l' || activeModule === 'cmp3') {
+        log(`Preview only (not connected): mode ${modeId}`, 'tx');
       }
-      // Update OSRAM effect button active state
+      // Update effect button state for whichever logo-style module is active,
+      // and start/stop its local preview animation.
       if (activeModule === 'osram') {
         document.querySelectorAll('#osramView .effect-btn').forEach(b => {
           b.classList.toggle('active', parseInt(b.dataset.mode) === modeId);
         });
+        startOsramPreviewAnimation(modeId);
+      } else if (activeModule === 'l') {
+        document.querySelectorAll('#lView .effect-btn').forEach(b => {
+          b.classList.toggle('active', parseInt(b.dataset.mode) === modeId);
+        });
+        startLPreviewAnimation(modeId);
+      } else if (activeModule === 'cmp3') {
+        document.querySelectorAll('#cmp3View .effect-btn').forEach(b => {
+          b.classList.toggle('active', parseInt(b.dataset.mode) === modeId);
+        });
+        // Only AURORA/OCEAN/FLAME (4/5/6) count as a "running built-in effect"
+        // for the color-picker gate below; 255 (OFF) and any other value fall
+        // back to null (solid/manual), same as leaving cmp3EffectMode unset.
+        cmp3EffectMode = (modeId === 4 || modeId === 5 || modeId === 6) ? modeId : null;
+        startCmp3PreviewAnimation(modeId);
       }
     }
+
+    // OS-Logo (new_block) built-in effects (1-8, CONVERGE FLASH..FIREWORKS).
+    // FW v3.15 added a dedicated MODULE_L-only engine (renderEffect_OSLOGO(),
+    // a formula-for-formula C port of osLogoComputeColor() below) that
+    // interprets modes 1-8 correctly — unlike MODULE_OSRAM, which still runs
+    // the old shared Logo1-3/Aurora/Ocean/Flame engine for modes 1-6. So 0x05
+    // is now safe to send here (previous versions deliberately withheld it —
+    // see git history — because the FW didn't understand these mode IDs yet).
+    async function setOsLogoEffectMode(effectId) {
+      if (connected && rxChar) {
+        await sendCmd([0x05, effectId & 0xff]);
+      } else {
+        log(`Preview only (not connected): OS-Logo effect ${effectId}`, 'tx');
+      }
+      document.querySelectorAll('#lView .effect-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.mode) === effectId);
+      });
+      startLPreviewAnimation(effectId);
+    }
+
+
 
     // VIOLA per-pixel: [0x01][x][y][R][G][B]
     async function sendVIOLAPixel(x, y, r, g, b) {
       await sendCmd([0x01, x & 7, y & 7, r & 0xff, g & 0xff, b & 0xff]);
     }
 
+    // OSRAM / L / CMP3 per-pixel (same wire format): [0x01][idx][R][G][B]
+    async function sendOSRAMPixel(idx, r, g, b) {
+      await sendCmd([0x01, idx & 0xff, r & 0xff, g & 0xff, b & 0xff]);
+    }
+    const sendLPixel = sendOSRAMPixel;      // identical protocol, alias for clarity
+    const sendCmp3Pixel = sendOSRAMPixel;   // identical protocol, alias for clarity
+
+    async function osramFill() {
+      await sendSolid(currentColor.r, currentColor.g, currentColor.b);
+    }
+    async function lFill() {
+      await sendSolid(currentColor.r, currentColor.g, currentColor.b);
+    }
+    async function cmp3Fill() {
+      await sendSolid(currentColor.r, currentColor.g, currentColor.b);
+    }
+
     // ============================================================================
-    // GCC slider (works for either module)
+    // 3-LED Comparison Board — INTERMITTENT effect (v1.21). Purely webapp-side:
+    // lights every other LED in a checkerboard pattern (physical grid, 10mm
+    // pitch: (round(x/10)+round(y/10)) even = on) using the current picker
+    // color, leaves the rest off. No firmware change needed — sending 0x01
+    // per-pixel commands already forces the firmware's currentMode back to 0
+    // (static) on OSRAM/L/CMP3 (see case 0x01 in the firmware), which is what
+    // stops a previously-running Aurora/Ocean/Flame from continuing to
+    // overwrite the pattern on its own.
+    //
+    // cmp3EffectMode tracks which built-in effect (if any) is currently
+    // active, so color-picker interactions (wheel drag, numeric RGB Send,
+    // WHITE) can be gated: only 'intermittent' and null (no effect / plain
+    // solid mode) react live to color changes — Aurora/Ocean/Flame ignore
+    // picker input while running (Ryoma's request).
+    // ============================================================================
+    let cmp3EffectMode = null;   // null = solid/manual, 4/5/6 = Aurora/Ocean/Flame, 'intermittent' = Intermittent
+
+    // NOTE: CMP3_INTERMITTENT_ON / CMP3_INTERMITTENT_SET are computed further
+    // down, right after CMP3_LEDS itself is defined (that data array lives
+    // near the bottom of this script, alongside OSRAM_LEDS/L_LEDS) — they
+    // can't be computed here, this early, without a temporal-dead-zone
+    // ReferenceError on page load.
+
+    async function cmp3SetIntermittent() {
+      if (typeof cmp3AnimRaf !== 'undefined' && cmp3AnimRaf) {
+        cancelAnimationFrame(cmp3AnimRaf);
+        clearTimeout(cmp3AnimRaf);
+        cmp3AnimRaf = null;
+      }
+      cmp3EffectMode = 'intermittent';
+      document.querySelectorAll('#cmp3View .effect-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === '7');
+      });
+      await cmp3ApplyIntermittent(true);
+    }
+
+    // clearFirst=true: send 0x02 first and explicitly blank the "off" LEDs in
+    // the local preview buffer — used on initial activation and on numeric/
+    // WHITE color changes. clearFirst=false: just re-push the "on" LEDs with
+    // the new color — used for live wheel-drag updates, where the "off" LEDs
+    // are already dark and re-clearing every throttled tick only adds BLE
+    // traffic and visible flicker.
+    //
+    // Serialized (v1.22): each pass sends 30 sequential per-LED BLE commands,
+    // which takes long enough (tens to hundreds of ms) that fast wheel drags
+    // could fire a new call before the previous one finished. Two overlapping
+    // loops interleaving their writes is what caused the reported bug — the
+    // bottom-to-top "sweep" sometimes appearing twice, or scrambled. Now only
+    // one pass ever runs at a time; a request that arrives while busy is
+    // coalesced into a single trailing pass (using the latest currentColor)
+    // that runs immediately after the current one finishes, instead of
+    // starting a second overlapping loop.
+    //
+    // v1.24: that fixed racing/overlapping calls, but not the real cause of
+    // "the sweep plays twice on every single tap" — pickCmp3Color() (fires on
+    // pointerdown/move) AND onCmp3WheelUp() (fires on pointerup) both call
+    // this for the SAME unchanged color on a simple tap, back-to-back. The
+    // first call is very often still mid-flight (30 sequential BLE writes
+    // take real time) when the second one arrives, so a same-color check
+    // against only the last COMPLETED pass wasn't enough — the second call
+    // would see "nothing in flight matches yet" and queue a redundant
+    // trailing pass anyway. Now the color of the pass currently running
+    // (cmp3ApplyInFlightColor) is tracked too, so a same-color request that
+    // arrives while that exact color is already being sent is dropped
+    // outright instead of being queued. (clearFirst=true still always goes
+    // through, since it can matter after WHITE/Aurora touched the board.)
+    let cmp3LastAppliedColor = null;     // {r,g,b} last color a completed pass actually pushed to the "on" LEDs
+    let cmp3ApplyInFlight = null;
+    let cmp3ApplyInFlightColor = null;   // {r,g,b} the currently-running pass is sending, or null if idle
+    let cmp3ApplyQueued = null;   // { clearFirst } of the next pass, or null
+
+    function cmp3ApplyIntermittent(clearFirst) {
+      const sameAs = (c) => c && c.r === currentColor.r && c.g === currentColor.g && c.b === currentColor.b;
+      if (!clearFirst) {
+        if (cmp3ApplyInFlight) {
+          if (sameAs(cmp3ApplyInFlightColor) && !cmp3ApplyQueued) {
+            return cmp3ApplyInFlight;   // the pass already running will produce exactly this color — nothing more to do
+          }
+        } else if (sameAs(cmp3LastAppliedColor)) {
+          return Promise.resolve();     // idle, and the board already shows this color — skip the redundant resend
+        }
+      }
+      if (cmp3ApplyInFlight) {
+        cmp3ApplyQueued = { clearFirst: (cmp3ApplyQueued && cmp3ApplyQueued.clearFirst) || clearFirst };
+        return cmp3ApplyInFlight;
+      }
+      cmp3ApplyInFlight = (async () => {
+        let doClear = clearFirst;
+        for (; ;) {
+          cmp3ApplyInFlightColor = { ...currentColor };
+          if (doClear) await sendCmd([0x02]);
+          const { r, g, b } = cmp3ApplyInFlightColor;
+          for (const idx of CMP3_INTERMITTENT_ON) {
+            cmp3Fb[idx] = { r, g, b };
+            await sendCmp3Pixel(idx, r, g, b);
+          }
+          if (doClear) {
+            for (const led of CMP3_LEDS) {
+              if (!CMP3_INTERMITTENT_SET.has(led.i)) cmp3Fb[led.i] = { r: 0, g: 0, b: 0 };
+            }
+            log(`Checkerboard pattern applied: ${CMP3_INTERMITTENT_ON.length}/${CMP3_LEDS.length} LEDs lit`, 'tx');
+          }
+          cmp3LastAppliedColor = cmp3ApplyInFlightColor;
+          renderCmp3Preview();
+          if (!cmp3ApplyQueued) break;
+          doClear = cmp3ApplyQueued.clearFirst;
+          cmp3ApplyQueued = null;
+        }
+        cmp3ApplyInFlight = null;
+        cmp3ApplyInFlightColor = null;
+      })();
+      return cmp3ApplyInFlight;
+    }
+
+    // ============================================================================
+    // 3-LED Comparison Board — per-TYPE white-balance calibration (v1.16,
+    // gain-based fix in v1.19 — see firmware v3.13 changelog)
+    // Groups: type 0/1/2 = 20 LEDs each (CMP3_LEDS[i].grp). BLE 0x20 SET_CALIB
+    // is per-LED in firmware, so adjusting a "type" sends the same gain% to
+    // all 20 of its LEDs. BLE 0x21 SAVE_CALIB persists the whole 60-LED table.
+    // Values are a GAIN PERCENT from 100 (multiplicative), not an additive
+    // offset — fixes a bug where OFF left some LEDs faintly lit at whatever
+    // color their saved offset implied. Session-local display (resets to
+    // +0/+0/+0 when you switch type or reconnect) — the firmware still
+    // applies whatever was last saved to NVS regardless of what this panel
+    // shows. There is no "read back current calibration" command yet, so
+    // re-visiting an already-calibrated type will show +0 here even though
+    // its saved gain is still in effect.
+    // ============================================================================
+    let calibType = 0;
+    let calibOffsets = { r: 0, g: 0, b: 0 };
+
+    function calibTypeMembers(type) {
+      return CMP3_LEDS.filter(led => led.grp === type).map(led => led.i);
+    }
+
+    function calibSelectType(type) {
+      calibType = type;
+      calibOffsets = { r: 0, g: 0, b: 0 };
+      document.querySelectorAll('.calib-type-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.type) === type);
+      });
+      updateCalibUI();
+    }
+    function updateCalibUI() {
+      $('calibRVal').textContent = (calibOffsets.r >= 0 ? '+' : '') + calibOffsets.r;
+      $('calibGVal').textContent = (calibOffsets.g >= 0 ? '+' : '') + calibOffsets.g;
+      $('calibBVal').textContent = (calibOffsets.b >= 0 ? '+' : '') + calibOffsets.b;
+    }
+    async function sendCalib(idx, dr, dg, db) {
+      await sendCmd([0x20, idx & 0xff, (dr + 128) & 0xff, (dg + 128) & 0xff, (db + 128) & 0xff]);
+    }
+    // Last-used calibration test color. Deliberately NOT full 255 on the lit
+    // channel(s): firmware quantizes 255 to the max PWM value (63/63) already,
+    // so a POSITIVE gain has nowhere to go (clamped straight back to 63 — no
+    // visible change, only negative/dimming gains would ever show). 200 leaves
+    // headroom in both directions, same rationale as the original all-white
+    // reference (v1.20).
+    let calibTestColor = { r: 200, g: 200, b: 200 };
+
+    async function calibDisplay(testColor) {
+      if (testColor) calibTestColor = testColor;
+      await sendCmd([0x02]);   // clear board
+      const members = calibTypeMembers(calibType);
+      const { r, g, b } = calibTestColor;
+      for (const idx of members) {
+        await sendCmp3Pixel(idx, r, g, b);  // firmware applies each LED's saved/live calib gain
+      }
+      log(`Displaying calibration test color (${r},${g},${b}) on Type ${'ABC'[calibType]} (${members.length} LEDs)`, 'tx');
+    }
+    function calibShowWhite() { return calibDisplay({ r: 200, g: 200, b: 200 }); }
+    function calibShowRed() { return calibDisplay({ r: 200, g: 0, b: 0 }); }
+    function calibShowGreen() { return calibDisplay({ r: 0, g: 200, b: 0 }); }
+    function calibShowBlue() { return calibDisplay({ r: 0, g: 0, b: 200 }); }
+    async function calibNudge(channel, delta) {
+      calibOffsets[channel] = Math.max(-50, Math.min(50, calibOffsets[channel] + delta));
+      updateCalibUI();
+      const members = calibTypeMembers(calibType);
+      for (const idx of members) {
+        await sendCalib(idx, calibOffsets.r, calibOffsets.g, calibOffsets.b);
+      }
+      await calibDisplay();
+    }
+    async function calibResetCurrent() {
+      calibOffsets = { r: 0, g: 0, b: 0 };
+      updateCalibUI();
+      const members = calibTypeMembers(calibType);
+      for (const idx of members) {
+        await sendCalib(idx, 0, 0, 0);
+      }
+      await calibDisplay();
+    }
+    async function calibSaveToDevice() {
+      await sendCmd([0x21]);
+      log('Calibration saved to device NVS (persists across power cycles)', 'ok');
+    }
+
+    // ============================================================================
+    // GCC slider (works for any module)
     // ============================================================================
     function onGccChange(v) {
       gcc = parseInt(v, 10);
       const hex = `0x${gcc.toString(16).padStart(2, '0').toUpperCase()} (${gcc}/64)`;
       if ($('gccVal')) $('gccVal').textContent = hex;
       if ($('osramGccVal')) $('osramGccVal').textContent = hex;
+      if ($('lGccVal')) $('lGccVal').textContent = hex;
+      if ($('cmp3GccVal')) $('cmp3GccVal').textContent = hex;
       if (connected) sendGcc(gcc);
     }
 
@@ -1111,10 +2197,9 @@
       osramLastPickCss = { x, y };
       updateOsramColorUI();
       drawWheelOverlay(osramWheel, osramWheelCache, osramWheelDpr, osramLastPickCss);
-      // Immediately fill all LEDs with the picked colour and clear any active effect
+      // v1.15: now auto-fills on pick, matching the 8x8 Matrix wheel's design.
+      // Tapping an individual LED afterwards still overrides just that one.
       sendSolid(px[0], px[1], px[2]);
-      // Deactivate effect buttons
-      document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
     }
 
     function updateOsramColorUI() {
@@ -1123,6 +2208,164 @@
       $('osramColorHex').textContent = hex;
       $('osramRgbText').textContent = `R: ${r}  G: ${g}  B: ${b}`;
       $('osramSwatch').style.background = hex;
+    }
+
+    // ============================================================================
+    // Color Wheel — L-logo (same picker, separate state; shares OSRAM's engine)
+    // ============================================================================
+    let lWheel = null;
+    let lWheelCache = null;
+    let lWheelGeom = { cx: 0, cy: 0, r: 0 };
+    let lWheelDpr = 1;
+    let lLastPickCss = null;
+    let lWheelInitialized = false;
+
+    function initLWheel() {
+      if (lWheelInitialized) return;
+      lWheel = $('colorWheelL');
+      lWheelCache = document.createElement('canvas');
+      rasterizeBaseWheel(lWheel, lWheelCache, 'l');
+      lWheel.addEventListener('pointerdown', onLWheelDown);
+      lWheel.addEventListener('pointermove', onLWheelMove);
+      lWheel.addEventListener('pointerup', onLWheelUp);
+      lWheel.addEventListener('pointercancel', () => { lDragging = false; });
+      lWheelInitialized = true;
+    }
+
+    let lDragging = false;
+    function onLWheelDown(e) {
+      lDragging = true;
+      lWheel.setPointerCapture(e.pointerId);
+      pickLColor(e);
+    }
+    function onLWheelMove(e) { if (lDragging) pickLColor(e); }
+    function onLWheelUp(e) {
+      lDragging = false;
+      try { lWheel.releasePointerCapture(e.pointerId); } catch { }
+    }
+
+    function pickLColor(ev) {
+      const rect = lWheel.getBoundingClientRect();
+      const x = (ev.clientX !== undefined ? ev.clientX : ev.touches[0].clientX) - rect.left;
+      const y = (ev.clientY !== undefined ? ev.clientY : ev.touches[0].clientY) - rect.top;
+      const dx = x - lWheelGeom.cx;
+      const dy = y - lWheelGeom.cy;
+      if (Math.sqrt(dx * dx + dy * dy) > lWheelGeom.r) return;
+      const cctx = lWheelCache.getContext('2d');
+      const px = cctx.getImageData(
+        Math.floor(x * lWheelDpr),
+        Math.floor(y * lWheelDpr),
+        1, 1
+      ).data;
+      currentColor = { r: px[0], g: px[1], b: px[2] };
+      lLastPickCss = { x, y };
+      updateLColorUI();
+      drawWheelOverlay(lWheel, lWheelCache, lWheelDpr, lLastPickCss);
+      // v1.15: now auto-fills on pick, matching the 8x8 Matrix wheel's design.
+      sendSolid(px[0], px[1], px[2]);
+    }
+
+    function updateLColorUI() {
+      const { r, g, b } = currentColor;
+      const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+      $('lColorHex').textContent = hex;
+      $('lRgbText').textContent = `R: ${r}  G: ${g}  B: ${b}`;
+      $('lSwatch').style.background = hex;
+    }
+
+    // ============================================================================
+    // Color Wheel — 3-LED Comparison Board (same picker, separate state)
+    // ============================================================================
+    let cmp3Wheel = null;
+    let cmp3WheelCache = null;
+    let cmp3WheelGeom = { cx: 0, cy: 0, r: 0 };
+    let cmp3WheelDpr = 1;
+    let cmp3LastPickCss = null;
+    let cmp3WheelInitialized = false;
+
+    function initCmp3Wheel() {
+      if (cmp3WheelInitialized) return;
+      cmp3Wheel = $('colorWheelCmp3');
+      cmp3WheelCache = document.createElement('canvas');
+      rasterizeBaseWheel(cmp3Wheel, cmp3WheelCache, 'cmp3');
+      cmp3Wheel.addEventListener('pointerdown', onCmp3WheelDown);
+      cmp3Wheel.addEventListener('pointermove', onCmp3WheelMove);
+      cmp3Wheel.addEventListener('pointerup', onCmp3WheelUp);
+      cmp3Wheel.addEventListener('pointercancel', () => { cmp3Dragging = false; });
+      cmp3WheelInitialized = true;
+    }
+
+    let cmp3Dragging = false;
+    function onCmp3WheelDown(e) {
+      cmp3Dragging = true;
+      cmp3Wheel.setPointerCapture(e.pointerId);
+      pickCmp3Color(e);
+    }
+    function onCmp3WheelMove(e) { if (cmp3Dragging) pickCmp3Color(e); }
+    function onCmp3WheelUp(e) {
+      cmp3Dragging = false;
+      try { cmp3Wheel.releasePointerCapture(e.pointerId); } catch { }
+      // Guarantee the exact released color lands, even if the last drag
+      // sample was throttled below. Only Intermittent / plain solid mode
+      // react to color changes — Aurora/Ocean/Flame ignore the release too.
+      // clearFirst=false: the "off" LEDs were already established at
+      // activation time and pickCmp3Color() never touches them, so a plain
+      // tap (pick then immediate release, same color) is now a genuine no-op
+      // via cmp3ApplyIntermittent()'s dedup check — that's what stops the
+      // sweep from visibly re-playing a second time on every tap/drag-end.
+      if (cmp3EffectMode === 'intermittent') {
+        cmp3ApplyIntermittent(false);
+      } else if (cmp3EffectMode === null) {
+        sendSolid(currentColor.r, currentColor.g, currentColor.b);
+      }
+    }
+
+    let cmp3LastSendTs = 0;
+    const WHEEL_SEND_THROTTLE_MS = 40;   // ~25/s cap so fast drags don't flood the BLE link
+
+    function pickCmp3Color(ev) {
+      const rect = cmp3Wheel.getBoundingClientRect();
+      const x = (ev.clientX !== undefined ? ev.clientX : ev.touches[0].clientX) - rect.left;
+      const y = (ev.clientY !== undefined ? ev.clientY : ev.touches[0].clientY) - rect.top;
+      const dx = x - cmp3WheelGeom.cx;
+      const dy = y - cmp3WheelGeom.cy;
+      if (Math.sqrt(dx * dx + dy * dy) > cmp3WheelGeom.r) return;
+      const cctx = cmp3WheelCache.getContext('2d');
+      const px = cctx.getImageData(
+        Math.floor(x * cmp3WheelDpr),
+        Math.floor(y * cmp3WheelDpr),
+        1, 1
+      ).data;
+      currentColor = { r: px[0], g: px[1], b: px[2] };
+      cmp3LastPickCss = { x, y };
+      updateCmp3ColorUI();
+      drawWheelOverlay(cmp3Wheel, cmp3WheelCache, cmp3WheelDpr, cmp3LastPickCss);
+      // Only Intermittent / plain solid mode react to color changes while
+      // dragging — Aurora/Ocean/Flame ignore picker input while running (the
+      // swatch/hex readout above still updates so the user can see what
+      // they're pointing at, it just isn't sent to the board).
+      if (cmp3EffectMode !== null && cmp3EffectMode !== 'intermittent') return;
+      // Live/sequential color-change while dragging, restored: send on every
+      // pick, throttled so a fast drag can't flood the BLE link and cause the
+      // choppy/delayed feel. onCmp3WheelUp() always sends the exact release
+      // color afterward, so the final value is never lost to throttling.
+      const now = performance.now();
+      if (now - cmp3LastSendTs >= WHEEL_SEND_THROTTLE_MS) {
+        cmp3LastSendTs = now;
+        if (cmp3EffectMode === 'intermittent') {
+          cmp3ApplyIntermittent(false);
+        } else {
+          sendSolid(px[0], px[1], px[2]);
+        }
+      }
+    }
+
+    function updateCmp3ColorUI() {
+      const { r, g, b } = currentColor;
+      const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+      $('cmp3ColorHex').textContent = hex;
+      $('cmp3RgbText').textContent = `R: ${r}  G: ${g}  B: ${b}`;
+      $('cmp3Swatch').style.background = hex;
     }
 
     // ============================================================================
@@ -1139,6 +2382,8 @@
       const r = Math.min(cx, cy) - 1;
       const geom = { cx, cy, r };
       if (which === 'viola') { violaWheelGeom = geom; violaWheelDpr = dpr; }
+      else if (which === 'l') { lWheelGeom = geom; lWheelDpr = dpr; }
+      else if (which === 'cmp3') { cmp3WheelGeom = geom; cmp3WheelDpr = dpr; }
       else { osramWheelGeom = geom; osramWheelDpr = dpr; }
       const cctx = cache.getContext('2d');
       const W = cache.width, H = cache.height;
@@ -1200,12 +2445,986 @@
     }
 
     // ============================================================================
+    // OSRAM live preview — physical LED positions (tap to set per-LED color)
+    // ============================================================================
+    const OSRAM_LEDS = [{ "i": 0, "x": 15.55, "y": 38.36, "L": "O", "sw": 0, "cs": 0 }, { "i": 1, "x": 48.06, "y": 34.60, "L": "S", "sw": 0, "cs": 1 }, { "i": 2, "x": 54.84, "y": 39.18, "L": "S", "sw": 0, "cs": 2 }, { "i": 3, "x": 91.99, "y": 37.60, "L": "R", "sw": 0, "cs": 3 }, { "i": 4, "x": 100.58, "y": 37.52, "L": "R", "sw": 0, "cs": 4 }, { "i": 5, "x": 131.89, "y": 36.90, "L": "A", "sw": 0, "cs": 5 }, { "i": 6, "x": 158.67, "y": 37.49, "L": "M", "sw": 0, "cs": 6 }, { "i": 7, "x": 188.59, "y": 37.49, "L": "M", "sw": 0, "cs": 7 }, { "i": 8, "x": 23.71, "y": 38.36, "L": "O", "sw": 1, "cs": 0 }, { "i": 9, "x": 30.53, "y": 33.35, "L": "O", "sw": 1, "cs": 1 }, { "i": 10, "x": 63.05, "y": 38.60, "L": "S", "sw": 1, "cs": 2 }, { "i": 11, "x": 83.53, "y": 37.54, "L": "R", "sw": 1, "cs": 3 }, { "i": 12, "x": 106.43, "y": 31.34, "L": "R", "sw": 1, "cs": 4 }, { "i": 13, "x": 126.48, "y": 29.96, "L": "A", "sw": 1, "cs": 5 }, { "i": 14, "x": 162.90, "y": 33.68, "L": "M", "sw": 1, "cs": 6 }, { "i": 15, "x": 184.38, "y": 33.68, "L": "M", "sw": 1, "cs": 7 }, { "i": 16, "x": 8.73, "y": 33.35, "L": "O", "sw": 2, "cs": 0 }, { "i": 17, "x": 48.08, "y": 26.47, "L": "S", "sw": 2, "cs": 1 }, { "i": 18, "x": 69.04, "y": 33.15, "L": "S", "sw": 2, "cs": 2 }, { "i": 19, "x": 83.53, "y": 29.52, "L": "R", "sw": 2, "cs": 3 }, { "i": 20, "x": 105.46, "y": 22.71, "L": "R", "sw": 2, "cs": 4 }, { "i": 21, "x": 136.76, "y": 29.96, "L": "A", "sw": 2, "cs": 5 }, { "i": 22, "x": 158.69, "y": 29.90, "L": "M", "sw": 2, "cs": 6 }, { "i": 23, "x": 188.59, "y": 29.90, "L": "M", "sw": 2, "cs": 7 }, { "i": 24, "x": 5.26, "y": 25.61, "L": "O", "sw": 3, "cs": 0 }, { "i": 25, "x": 34.00, "y": 25.61, "L": "O", "sw": 3, "cs": 1 }, { "i": 26, "x": 55.74, "y": 23.06, "L": "S", "sw": 3, "cs": 2 }, { "i": 27, "x": 83.53, "y": 21.83, "L": "R", "sw": 3, "cs": 3 }, { "i": 28, "x": 123.56, "y": 21.97, "L": "A", "sw": 3, "cs": 4 }, { "i": 29, "x": 139.67, "y": 21.97, "L": "A", "sw": 3, "cs": 5 }, { "i": 30, "x": 167.30, "y": 26.54, "L": "M", "sw": 3, "cs": 6 }, { "i": 31, "x": 179.98, "y": 26.54, "L": "M", "sw": 3, "cs": 7 }, { "i": 32, "x": 5.23, "y": 17.12, "L": "O", "sw": 4, "cs": 0 }, { "i": 33, "x": 34.03, "y": 17.12, "L": "O", "sw": 4, "cs": 1 }, { "i": 34, "x": 63.86, "y": 20.81, "L": "S", "sw": 4, "cs": 2 }, { "i": 35, "x": 97.68, "y": 18.79, "L": "R", "sw": 4, "cs": 3 }, { "i": 36, "x": 120.65, "y": 14.00, "L": "A", "sw": 4, "cs": 4 }, { "i": 37, "x": 142.58, "y": 14.00, "L": "A", "sw": 4, "cs": 5 }, { "i": 38, "x": 158.69, "y": 21.83, "L": "M", "sw": 4, "cs": 6 }, { "i": 39, "x": 188.59, "y": 21.83, "L": "M", "sw": 4, "cs": 7 }, { "i": 40, "x": 8.65, "y": 9.36, "L": "O", "sw": 5, "cs": 0 }, { "i": 41, "x": 47.01, "y": 10.77, "L": "S", "sw": 5, "cs": 1 }, { "i": 42, "x": 69.73, "y": 15.23, "L": "S", "sw": 5, "cs": 2 }, { "i": 43, "x": 88.20, "y": 18.78, "L": "R", "sw": 5, "cs": 3 }, { "i": 44, "x": 100.61, "y": 12.06, "L": "R", "sw": 5, "cs": 4 }, { "i": 45, "x": 127.62, "y": 13.17, "L": "A", "sw": 5, "cs": 5 }, { "i": 46, "x": 173.36, "y": 21.14, "L": "M", "sw": 5, "cs": 6 }, { "i": 47, "x": 188.59, "y": 14.26, "L": "M", "sw": 5, "cs": 7 }, { "i": 48, "x": 15.43, "y": 4.30, "L": "O", "sw": 6, "cs": 0 }, { "i": 49, "x": 30.62, "y": 9.36, "L": "O", "sw": 6, "cs": 1 }, { "i": 50, "x": 68.25, "y": 7.44, "L": "S", "sw": 6, "cs": 2 }, { "i": 51, "x": 83.53, "y": 14.28, "L": "R", "sw": 6, "cs": 3 }, { "i": 52, "x": 117.74, "y": 6.01, "L": "A", "sw": 6, "cs": 4 }, { "i": 53, "x": 135.62, "y": 13.17, "L": "A", "sw": 6, "cs": 5 }, { "i": 54, "x": 158.69, "y": 14.26, "L": "M", "sw": 6, "cs": 6 }, { "i": 55, "x": 173.52, "y": 13.33, "L": "M", "sw": 6, "cs": 7 }, { "i": 56, "x": 23.83, "y": 4.30, "L": "O", "sw": 7, "cs": 0 }, { "i": 57, "x": 52.72, "y": 5.02, "L": "S", "sw": 7, "cs": 1 }, { "i": 58, "x": 60.86, "y": 3.99, "L": "S", "sw": 7, "cs": 2 }, { "i": 59, "x": 83.53, "y": 6.28, "L": "R", "sw": 7, "cs": 3 }, { "i": 60, "x": 103.98, "y": 4.88, "L": "R", "sw": 7, "cs": 4 }, { "i": 61, "x": 145.50, "y": 6.01, "L": "A", "sw": 7, "cs": 5 }, { "i": 62, "x": 158.69, "y": 6.23, "L": "M", "sw": 7, "cs": 6 }, { "i": 63, "x": 188.59, "y": 6.23, "L": "M", "sw": 7, "cs": 7 }];
+
+    const OSRAM_XMIN = 5.23, OSRAM_XMAX = 188.59;
+    const OSRAM_YMIN = 3.99, OSRAM_YMAX = 39.18;
+    const OSRAM_W = OSRAM_XMAX - OSRAM_XMIN;
+    const OSRAM_H = OSRAM_YMAX - OSRAM_YMIN;
+    const osramFb = OSRAM_LEDS.map(() => ({ r: 0, g: 0, b: 0 }));
+
+    // ============================================================================
+    // OS-Logo (new_block) LED data — 42 LEDs, from new_block_sw_cs_layered.csv
+    // (idx 0-41, x_mm/y_mm already centered on the 42-LED bounding-box center
+    // per the CSV's own convention). r/theta/rNorm/xn/yn are derived below.
+    // v1.28: replaced the old 46-LED L_LEDS (ring+stroke) placeholder data.
+    // ============================================================================
+    const L_LEDS = [{ "i": 0, "x": -18.9714, "y": -32.1221 }, { "i": 1, "x": -11.5311, "y": -34.8422 }, { "i": 2, "x": -3.764, "y": -36.6842 }, { "i": 3, "x": 4.2179, "y": -36.6293 }, { "i": 4, "x": 11.9621, "y": -34.7555 }, { "i": 5, "x": 19.0603, "y": -31.1699 }, { "i": 6, "x": 25.3091, "y": -26.2062 }, { "i": 7, "x": 30.4923, "y": -20.1492 }, { "i": 8, "x": 34.2924, "y": -13.1614 }, { "i": 9, "x": 36.3318, "y": -5.4723 }, { "i": 10, "x": 36.698, "y": 2.4882 }, { "i": 11, "x": 35.0605, "y": 10.2857 }, { "i": 12, "x": 30.3433, "y": 16.6518 }, { "i": 13, "x": 23.0671, "y": 19.8311 }, { "i": 14, "x": 15.118, "y": 20.4263 }, { "i": 15, "x": 7.1857, "y": 19.4646 }, { "i": 16, "x": -0.5999, "y": 17.5555 }, { "i": 17, "x": -7.9276, "y": 14.4021 }, { "i": 18, "x": -12.681, "y": 8.3428 }, { "i": 19, "x": -8.4429, "y": 2.2185 }, { "i": 20, "x": -0.8581, "y": -0.1328 }, { "i": 21, "x": 6.8053, "y": -2.2237 }, { "i": 22, "x": 12.5524, "y": -7.502 }, { "i": 23, "x": 9.7288, "y": -14.67 }, { "i": 24, "x": 2.644, "y": -18.4298 }, { "i": 25, "x": -5.0411, "y": -20.7081 }, { "i": 26, "x": -12.956, "y": -21.9376 }, { "i": 27, "x": -20.9928, "y": -21.7149 }, { "i": 28, "x": -28.577, "y": -19.1296 }, { "i": 29, "x": -34.1162, "y": -13.3552 }, { "i": 30, "x": -36.4022, "y": -5.6418 }, { "i": 31, "x": -36.698, "y": 2.4071 }, { "i": 32, "x": -35.2738, "y": 10.3197 }, { "i": 33, "x": -32.133, "y": 17.668 }, { "i": 34, "x": -27.4401, "y": 24.1245 }, { "i": 35, "x": -21.5438, "y": 29.4997 }, { "i": 36, "x": -14.7058, "y": 33.5792 }, { "i": 37, "x": -7.1135, "y": 36.0019 }, { "i": 38, "x": 0.8294, "y": 36.6842 }, { "i": 39, "x": 8.7389, "y": 35.6963 }, { "i": 40, "x": 16.1953, "y": 32.8526 }, { "i": 41, "x": 23.4398, "y": 29.4978 }];
+
+    // Derived geometry for new_block's 8 confirmed effects (per
+    // new_block_lighting_algorithm_spec.md v9): r/theta/rNorm are polar
+    // coordinates about the 42-LED bounding-box center (already the CSV's
+    // origin), used by CONVERGE FLASH/KALEIDOSCOPE/PLASMA/FIREWORKS.
+    let OSLOGO_MAXR = 0;
+    L_LEDS.forEach(led => {
+      led.r = Math.hypot(led.x, led.y);
+      led.theta = Math.atan2(led.y, led.x);
+      if (led.r > OSLOGO_MAXR) OSLOGO_MAXR = led.r;
+    });
+    L_LEDS.forEach(led => { led.rNorm = led.r / OSLOGO_MAXR; });
+    const OSLOGO_MID_IDX = (L_LEDS.length - 1) / 2;   // 20.5, virtual center for
+    // CONVERGE FLASH / EQUALIZER
+
+    const L_XMIN = -36.698, L_XMAX = 36.698;
+    const L_YMIN = -36.6842, L_YMAX = 36.6842;
+    const L_W = L_XMAX - L_XMIN;
+    const L_H = L_YMAX - L_YMIN;
+    L_LEDS.forEach(led => {
+      led.xn = (led.x - L_XMIN) / L_W;
+      led.yn = (led.y - L_YMIN) / L_H;
+    });
+    const lFb = L_LEDS.map(() => ({ r: 0, g: 0, b: 0 }));
+
+    // ============================================================================
+    // OS-Logo (new_block, 42 LEDs) — 8 confirmed lighting effects.
+    // Ported verbatim (formula-for-formula) from
+    // new_block_lighting_algorithm_spec.md (HTMLデモ確定版 v9). This is the
+    // webapp-side preview/reference implementation; the matching FW (C) port
+    // for x64 LED Driver has NOT been done yet — see FW/Webapp handoff doc.
+    // Effect IDs 1-8 map 1:1 to the spec's sections 1-8 (CONVERGE FLASH,
+    // KALEIDOSCOPE, EQUALIZER, CANDLE, WATER, SPIRAL CHASE, PLASMA, FIREWORKS).
+    // ============================================================================
+    function osLogoSeededRandom(seed) {
+      const v = Math.sin(seed * 12.9898) * 43758.5453;
+      return v - Math.floor(v);
+    }
+    function osLogoFbm1(x, octaves) {
+      let sum = 0, amp = 1, freq = 1, norm = 0;
+      for (let i = 0; i < octaves; i++) {
+        sum += amp * Math.sin(x * freq + i * 12.9898);
+        norm += amp;
+        amp *= 0.5;
+        freq *= 2.13;
+      }
+      return sum / norm;
+    }
+    function osLogoFbm2(x, y, octaves) {
+      let sum = 0, amp = 1, freq = 1, norm = 0;
+      for (let i = 0; i < octaves; i++) {
+        const phase = (x * 0.055 + y * 0.047) * freq + i * 7.234;
+        sum += amp * Math.sin(phase);
+        norm += amp;
+        amp *= 0.55;
+        freq *= 1.9;
+      }
+      return sum / norm;
+    }
+    function osLogoClamp01(v) { return Math.max(0, Math.min(1, v)); }
+    function osLogoLerp(a, b, t) { return a + (b - a) * t; }
+    function osLogoSmoothstep(t) { t = osLogoClamp01(t); return t * t * (3 - 2 * t); }
+    function osLogoLerpColor(c1, c2, t) {
+      return [osLogoLerp(c1[0], c2[0], t), osLogoLerp(c1[1], c2[1], t), osLogoLerp(c1[2], c2[2], t)];
+    }
+    const OSLOGO_BLACK = [0, 0, 0];
+    const OSLOGO_WHITE = [1, 1, 1];
+    const OSLOGO_WARMWHITE = [255 / 255, 250 / 255, 235 / 255];
+    const OSLOGO_ORANGE = [240 / 255, 70 / 255, 28 / 255];   // brand orange #F0461C
+
+    // --- Effect 1 (CONVERGE FLASH) is a one-shot sequence, not a loop: it plays
+    //     once then holds brand orange until the next BLE command (spec §1).
+    //     Total duration isn't specified numerically in the spec (left to
+    //     implementation); 9.4s gives each phase a readable, non-rushed length.
+    const OSLOGO_EFFECT1_TOTAL = 9.4;
+
+    // --- Effect 3 (EQUALIZER): pre-generate the 132BPM/8-measure drum pattern
+    //     once at load time (spec §3). Measures 4 and 8 (0-indexed 3 and 7) get
+    //     the fill-in pattern.
+    const EQ_BPM = 132;
+    const EQ_BEAT_DUR = 60 / EQ_BPM;
+    const EQ_MEASURE_DUR = EQ_BEAT_DUR * 4;
+    const EQ_MEASURES = 8;
+    const EQ_LOOP = EQ_MEASURE_DUR * EQ_MEASURES;
+    const EQ_NORMAL_PATTERN = [
+      { frac: 0.0, strength: 1.00 }, { frac: 0.5, strength: 0.20 },
+      { frac: 1.0, strength: 0.82 }, { frac: 1.5, strength: 0.20 },
+      { frac: 2.0, strength: 0.92 }, { frac: 2.5, strength: 0.25 },
+      { frac: 3.0, strength: 0.88 }, { frac: 3.5, strength: 0.28 },
+    ];
+    const EQ_FILL_PATTERN = [
+      { frac: 0.0, strength: 1.00 }, { frac: 0.5, strength: 0.20 },
+      { frac: 1.0, strength: 0.82 }, { frac: 1.5, strength: 0.20 },
+      { frac: 2.0, strength: 0.92 },
+      { frac: 2.25, strength: 0.55 }, { frac: 2.5, strength: 0.65 }, { frac: 2.75, strength: 0.78 },
+      { frac: 3.0, strength: 0.95 }, { frac: 3.25, strength: 0.60 }, { frac: 3.5, strength: 0.72 }, { frac: 3.75, strength: 0.90 },
+    ];
+    const EQ_BEATS = [];
+    (function () {
+      let si = 0;
+      for (let m = 0; m < EQ_MEASURES; m++) {
+        const pattern = (m === 3 || m === 7) ? EQ_FILL_PATTERN : EQ_NORMAL_PATTERN;
+        for (const hit of pattern) {
+          const jitterT = (osLogoSeededRandom(m * 13.7 + si * 3.1 + 1) - 0.5) * 0.018;
+          const jitterS = 0.88 + 0.28 * osLogoSeededRandom(m * 7.7 + si * 5.3 + 2);
+          const strengthFinal = osLogoClamp01(hit.strength * jitterS);
+          const decay = 0.14 + 0.34 * strengthFinal;
+          const tFinal = m * EQ_MEASURE_DUR + hit.frac * EQ_BEAT_DUR + jitterT;
+          EQ_BEATS.push({ t: tFinal, strength: strengthFinal, decay });
+          si++;
+        }
+      }
+    })();
+    function osLogoEqExtent(loopT) {
+      let best = null;
+      for (const beat of EQ_BEATS) {
+        if (beat.t <= loopT && (!best || beat.t > best.t)) best = beat;
+      }
+      let localT;
+      if (!best) {
+        best = EQ_BEATS[EQ_BEATS.length - 1];
+        if (!best) return 0;
+        localT = (loopT + EQ_LOOP) - best.t;
+      } else {
+        localT = loopT - best.t;
+      }
+      const attack = 0.02;
+      const env = localT < attack
+        ? osLogoSmoothstep(localT / attack)
+        : Math.pow(osLogoClamp01(1 - (localT - attack) / best.decay), 1.5);
+      return best.strength * osLogoClamp01(env);
+    }
+
+    // --- Effect 5 (WATER): pre-generate the sparse white-glint schedule
+    //     (spec §5). One sparkle LED at a time, 0.5-2.1s apart.
+    const WR_LOOP = 40;
+    const WR_FLASH_DURATION = 0.35;
+    const WR_SPARKLES = [];
+    (function () {
+      let t = 0, i = 0;
+      while (t < WR_LOOP) {
+        const gap = 0.5 + osLogoSeededRandom(i * 3.77 + 5.5) * 1.6;
+        t += gap;
+        if (t < WR_LOOP) WR_SPARKLES.push({ t, ledIdx: Math.floor(osLogoSeededRandom(i * 9.13 + 2.2) * 42) % 42 });
+        i++;
+      }
+    })();
+
+    // --- Effect 8 (FIREWORKS): pre-generate launch times, with occasional
+    //     2-4-shot clusters (spec §8).
+    const FW_LOOP = 60;
+    const FW_LAUNCH_DURATION = 1.0;
+    const FW_BURST_FADE_DURATION = 0.9;
+    const FW_BURST_DURATION = 1.9;
+    const FW_LAUNCHES = [];
+    (function () {
+      let t = 0, i = 0;
+      while (t < FW_LOOP) {
+        const cluster = osLogoSeededRandom(i * 4.21 + 9.9) > 0.78;
+        if (cluster) {
+          const size = 2 + Math.floor(osLogoSeededRandom(i * 5.55 + 3.3) * 3);
+          for (let c = 0; c < size; c++) {
+            const gap = (c === 0) ? (0.6 + osLogoSeededRandom(i * 7.31 + 1.7) * 2.0)
+              : (0.12 + osLogoSeededRandom(i * 11.1 + c * 2.3) * 0.25);
+            t += gap;
+            if (t < FW_LOOP) FW_LAUNCHES.push(t);
+            i++;
+          }
+        } else {
+          const gap = 1.0 + osLogoSeededRandom(i * 7.31 + 1.7) * 2.6;
+          t += gap;
+          if (t < FW_LOOP) FW_LAUNCHES.push(t);
+          i++;
+        }
+      }
+    })();
+
+    // effectId: 1=CONVERGE FLASH, 2=KALEIDOSCOPE, 3=EQUALIZER, 4=CANDLE,
+    // 5=WATER, 6=SPIRAL CHASE, 7=PLASMA, 8=FIREWORKS. Returns [r,g,b] 0..1,
+    // same convention as osramComputeColor() (consumed by the shared
+    // EMA + gamma pipeline in lAnimLoop()).
+    function osLogoComputeColor(effectId, led, dt) {
+      const x = led.x, y = led.y, rr = led.r, theta = led.theta, rNorm = led.rNorm, idx = led.i;
+      const LAST = L_LEDS.length - 1;   // 41
+
+      if (effectId === 1) {
+        const tt = Math.min(dt / OSLOGO_EFFECT1_TOTAL, 1.0);
+        const PH_CONVERGE = 0.32, PH_FLASH = 0.08 * 0.70, PH_BLACKOUT = 0.05, PH_FADEIN = 0.23, PH_SHIFT = 0.17;
+        const PB1 = PH_CONVERGE, PB2 = PB1 + PH_FLASH, PB3 = PB2 + PH_BLACKOUT, PB4 = PB3 + PH_FADEIN, PB5 = PB4 + PH_SHIFT;
+        if (tt < PB1) {
+          const p = tt / PB1;
+          const headF = p * OSLOGO_MID_IDX, headB = LAST - p * OSLOGO_MID_IDX;
+          const TRAIL = 5;
+          let bright = 0;
+          const dF = headF - idx, dB = idx - headB;
+          if (idx <= headF + 0.6) {
+            if (dF >= 0 && dF <= TRAIL) bright = Math.max(bright, 1 - dF / TRAIL);
+            else if (dF > -1.2 && dF < 0) bright = Math.max(bright, osLogoClamp01(1 + dF / 1.2) * 0.6);
+          }
+          if (idx >= headB - 0.6) {
+            if (dB >= 0 && dB <= TRAIL) bright = Math.max(bright, 1 - dB / TRAIL);
+            else if (dB > -1.2 && dB < 0) bright = Math.max(bright, osLogoClamp01(1 + dB / 1.2) * 0.6);
+          }
+          return osLogoLerpColor(OSLOGO_BLACK, OSLOGO_WHITE, Math.pow(osLogoClamp01(bright), 1.3));
+        } else if (tt < PB2) {
+          const ft = (tt - PB1) / PH_FLASH;
+          const frontR = ft * 1.35, envelope = Math.sin(ft * Math.PI);
+          const d = Math.abs(rNorm - frontR);
+          const wave = Math.exp(-(d * d) / (2 * 0.11 * 0.11));
+          const b = osLogoClamp01(wave * envelope * 1.4 + envelope * 0.12);
+          return osLogoLerpColor(OSLOGO_BLACK, OSLOGO_WARMWHITE, b);
+        } else if (tt < PB3) {
+          return OSLOGO_BLACK;
+        } else if (tt < PB4) {
+          return osLogoLerpColor(OSLOGO_BLACK, OSLOGO_WHITE, osLogoSmoothstep((tt - PB3) / PH_FADEIN));
+        } else if (tt < PB5) {
+          return osLogoLerpColor(OSLOGO_WHITE, OSLOGO_ORANGE, osLogoSmoothstep((tt - PB4) / PH_SHIFT));
+        } else {
+          return OSLOGO_ORANGE;
+        }
+      }
+
+      if (effectId === 2) {
+        const KALEIDO_SPEED = 1.8, ARMS = 6;
+        const kt = dt * KALEIDO_SPEED, rot = kt * 0.35;
+        const a = ((theta * ARMS - rot * ARMS) % (2 * Math.PI) + 4 * Math.PI) % (2 * Math.PI);
+        const folded = Math.abs(a - Math.PI) / Math.PI;
+        let hue = (folded * 200 + rNorm * 260 - kt * 40) % 360;
+        if (hue < 0) hue += 360;
+        const val = 0.65 + 0.35 * Math.sin(rNorm * 4 * Math.PI - kt * 2.4 + folded * 3);
+        return _hsv2rgbF(hue, 0.92, osLogoClamp01(val));
+      }
+
+      if (effectId === 3) {
+        const loopT = ((dt % EQ_LOOP) + EQ_LOOP) % EQ_LOOP;
+        // v1.31: rainbow palette (was green->red), driven by true radial
+        // position (rNorm) with a continuous outward phase shift, so rainbow
+        // rings visibly travel from center to edge over time. Per-LED fbm
+        // jitter added to the bar-extent threshold so it looks like a real
+        // multi-band spectrum analyzer, not one clean synchronized pulse.
+        // v1.30's build/peak/breakdown/peak macro-energy cycle kept.
+        const li = Math.floor(dt / EQ_LOOP);
+        const SECTION_ENERGY = [0.60, 1.00, 0.42, 0.85];
+        const energy = SECTION_ENERGY[((li % 4) + 4) % 4];
+        const extentBase = osLogoEqExtent(loopT) * energy;
+        const localNoise = osLogoFbm1(dt * 2.6 + idx * 4.3, 3);
+        const extent = osLogoClamp01(extentBase * (0.55 + 0.55 * (0.5 + 0.5 * localNoise)));
+        const EDGE = 0.05;
+        const dNorm = Math.abs(idx - OSLOGO_MID_IDX) / OSLOGO_MID_IDX;
+        // v1.32 (Ryoma): adjacent LEDs looked like unrelated colors, not a
+        // gradient — 2 full rainbow turns across the radius made hue jump
+        // too fast between physically close LEDs. Dropped to 1 turn (one
+        // smooth rainbow sweep center->edge) and slowed the outward drift so
+        // the whole gradient scrolls outward gradually, as asked.
+        const RAINBOW_TURNS = 1.0, OUTWARD_SPEED = 40;
+        let hue = (rNorm * 360 * RAINBOW_TURNS - dt * OUTWARD_SPEED) % 360;
+        if (hue < 0) hue += 360;
+        let bright;
+        if (dNorm <= extent) {
+          bright = 0.50 + 0.50 * osLogoClamp01(1 - (extent - dNorm) / EDGE);
+        } else {
+          bright = 0.45 * osLogoClamp01(1 - (dNorm - extent) / EDGE);
+        }
+        bright *= (0.75 + 0.25 * energy);
+        return _hsv2rgbF(hue, 0.90, osLogoClamp01(bright));
+      }
+
+      if (effectId === 4) {
+        const n = osLogoFbm1(dt * 2.6 + idx * 3.7, 4);   // v1.31: 1.3->2.6 (2x color-change speed)
+        const bright = osLogoClamp01(0.54 + 0.46 * n);
+        let hue = (16 + 24 * osLogoFbm1(dt * 1.1 + idx * 1.9 + 50, 4)) % 360;   // v1.31: 0.55->1.1
+        if (hue < 0) hue += 360;
+        return _hsv2rgbF(hue, 0.92, bright);
+      }
+
+      if (effectId === 5) {
+        const loopT = ((dt % WR_LOOP) + WR_LOOP) % WR_LOOP;
+        let boost = 0;
+        for (const ev of WR_SPARKLES) {
+          if (ev.ledIdx !== idx) continue;
+          // v1.31: same start-clean fix as FIREWORKS — don't consider a loop
+          // that hasn't happened yet, so a sparkle can't be mid-flash at dt=0.
+          const offsets = dt >= WR_LOOP ? [-WR_LOOP, 0, WR_LOOP] : [0, WR_LOOP];
+          for (const offset of offsets) {
+            const localT = loopT - (ev.t + offset);
+            if (localT >= 0 && localT <= WR_FLASH_DURATION) {
+              boost = Math.max(boost, Math.sin(localT / WR_FLASH_DURATION * Math.PI));
+            }
+          }
+        }
+        const n = osLogoFbm2(x * 1.4 + dt * 18, y * 1.4 + dt * 10.4, 4);
+        let bright = osLogoClamp01(0.14 + 0.95 * (0.5 + 0.5 * n));
+        bright = osLogoClamp01(bright * 1.3);
+        // v1.31: the ripple itself now shifts blue<->white as it ripples
+        // (crest -> near-white, trough -> deep blue), on top of which the
+        // existing random white-flash mechanic (boost) still applies.
+        const crest = osLogoClamp01(0.5 + 0.5 * n);
+        const satBase = osLogoLerp(0.85, 0.10, crest);
+        let hue = 205, sat = satBase;
+        if (boost > 0) {
+          bright = osLogoClamp01(bright + boost * 1.0);
+          sat = osLogoLerp(satBase, 0.0, boost);
+        }
+        return _hsv2rgbF(hue, sat, bright);
+      }
+
+      if (effectId === 6) {
+        const SC_LEG_TIME = 41 / 20, SC_FADE_TIME = 0.28;
+        const SC_CYCLE = SC_LEG_TIME * 2;
+        const cyc = ((dt % SC_CYCLE) + SC_CYCLE) % SC_CYCLE;
+        let localT, headIdx;
+        if (cyc < SC_LEG_TIME) {
+          localT = cyc; headIdx = (localT / SC_LEG_TIME) * 41;
+        } else {
+          localT = cyc - SC_LEG_TIME; headIdx = 41 - (localT / SC_LEG_TIME) * 41;
+        }
+        let env;
+        if (localT < SC_FADE_TIME) env = osLogoSmoothstep(localT / SC_FADE_TIME);
+        else if (localT > SC_LEG_TIME - SC_FADE_TIME) env = osLogoSmoothstep((SC_LEG_TIME - localT) / SC_FADE_TIME);
+        else env = 1;
+        const TRAIL = 7;
+        const d = Math.abs(headIdx - idx);
+        const trail = (d <= TRAIL) ? (1 - d / TRAIL) : 0;
+        const val = osLogoClamp01(Math.pow(trail, 1.15) * env);
+        let hue = (idx / 41 * 320 + dt * 45) % 360;   // v1.30: 30->45 (50% faster color timing, Ryoma's request)
+        if (hue < 0) hue += 360;
+        return _hsv2rgbF(hue, 0.85, val);
+      }
+
+      if (effectId === 7) {
+        // v1.31: PLASMA -> AURORA. Ported VERBATIM from osramComputeColor()'s
+        // mode===4 (Aurora, itself the webapp mirror of FW's shared
+        // renderPixel() case 5) — same formula, same perlin(), fed
+        // new_block's own x_norm/y_norm instead of the OSRAM grid's.
+        const x8 = led.xn * 8, y8 = led.yn * 8;
+        const y_top = 8 - y8;
+        const n = perlin(x8 * 0.12 + dt, y_top * 0.04, dt * 0.08);
+        const s = Math.sin(x8 * 0.35 + n * 5.5) * 0.5 + 0.5;
+        const lum = Math.pow(s, 2.5);
+        const hueBase = 140 + Math.sin(dt * 0.5) * 40;
+        const hue = ((hueBase + y_top * 15) % 360 + 360) % 360;
+        return _hsv2rgbF(hue, 0.9, lum);
+      }
+
+      if (effectId === 8) {
+        const loopT = ((dt % FW_LOOP) + FW_LOOP) % FW_LOOP;
+        let out = [0, 0, 0];
+        for (let li = 0; li < FW_LAUNCHES.length; li++) {
+          const Lt = FW_LAUNCHES[li];
+          // v1.31 fix: don't consider a loop that hasn't happened yet — at
+          // dt=0 (button just pressed) there's no "previous loop", so the
+          // -FW_LOOP wraparound (which could put a burst already mid-flight
+          // at dt=0) is only allowed once at least one real loop has
+          // elapsed. The first burst after pressing FIREWORKS now always
+          // starts from its actual launch, not mid-explosion.
+          const offsets = dt >= FW_LOOP ? [-FW_LOOP, 0, FW_LOOP] : [0, FW_LOOP];
+          for (const offset of offsets) {
+            const localT = loopT - (Lt + offset);
+            if (localT < 0 || localT > FW_BURST_DURATION) continue;
+            const hue = (li * 137.5) % 360;
+            let frontR, envelope, sigma;
+            if (localT < FW_LAUNCH_DURATION) {
+              const p = localT / FW_LAUNCH_DURATION;
+              frontR = p * 1.05; envelope = 0.55 + 0.45 * p; sigma = 0.045;
+            } else {
+              const p = (localT - FW_LAUNCH_DURATION) / FW_BURST_FADE_DURATION;
+              frontR = 1.05; envelope = (1 - p); sigma = 0.13 + p * 0.12;
+            }
+            const d = Math.abs(rNorm - frontR);
+            const shell = Math.exp(-(d * d) / (2 * sigma * sigma));
+            const sparkle = 0.6 + 0.4 * Math.sin(dt * 9 + idx * 3.7 + li * 1.3);
+            const b = osLogoClamp01(shell * envelope * sparkle * 1.3);
+            const cc = _hsv2rgbF(hue, 0.85, b);
+            out[0] = Math.max(out[0], cc[0]);
+            out[1] = Math.max(out[1], cc[1]);
+            out[2] = Math.max(out[2], cc[2]);
+          }
+        }
+        return out;
+      }
+
+      return OSLOGO_BLACK;
+    }
+
+
+
+    function renderLPreview() {
+      // v1.29: Live Preview card (SVG) removed from OS-Logo Module — this fn
+      // is still called from lAnimLoop()/startLPreviewAnimation()/tap-to-set
+      // handlers below, so it stays as a safe no-op rather than removing all
+      // those call sites individually.
+      const svg = $('lPreview');
+      if (!svg) return;
+      const SVG_W = 500, SVG_H = 380, MARGIN = 26;
+      const SCALE = Math.min((SVG_W - 2 * MARGIN) / L_W, (SVG_H - 2 * MARGIN) / L_H);
+      const offX = (SVG_W - L_W * SCALE) / 2;
+      const offY = (SVG_H - L_H * SCALE) / 2;
+      const sx = x => offX + (x - L_XMIN) * SCALE;
+      const sy = y => SVG_H - offY - (y - L_YMIN) * SCALE;
+      const R = 8;
+
+      let html = `<defs>
+    <filter id="lGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`;
+
+      for (const led of L_LEDS) {
+        const { r, g, b } = lFb[led.i];
+        const isOff = r + g + b < 12;
+        const color = isOff ? '#1a1a24' : `rgb(${r},${g},${b})`;
+        const filter = !isOff ? 'filter="url(#lGlow)"' : '';
+        html += `<circle cx="${sx(led.x).toFixed(1)}" cy="${sy(led.y).toFixed(1)}" r="${R}" fill="${color}" stroke="#fff" stroke-width="0.5" stroke-opacity="${isOff ? 0.1 : 0.35}" ${filter} data-i="${led.i}" style="cursor:pointer;"/>`;
+      }
+      svg.innerHTML = html;
+      svg.querySelectorAll('circle').forEach(c => {
+        c.addEventListener('click', () => {
+          const i = parseInt(c.dataset.i);
+          const { r, g, b } = currentColor;
+          lFb[i] = { r, g, b };
+          sendLPixel(i, r, g, b);
+          renderLPreview();
+        });
+      });
+    }
+
+    // ============================================================================
+    // 3-LED Comparison Board data — 60 LEDs, 3 blocks of 20 (grp: 0=type A,
+    // 1=type B, 2=type C). No Logo1/2/3 for this module (Ryoma's choice) —
+    // sNorm is set for consistency but is never exercised in practice since
+    // only modes 4/5/6 (Aurora/Ocean/Flame) + solid color are offered.
+    // ============================================================================
+    const CMP3_LEDS = [{ "i": 0, "x": 0.0, "y": 0.0, "sw": 0, "cs": 0, "grp": 0 }, { "i": 1, "x": 10.0, "y": 0.0, "sw": 0, "cs": 1, "grp": 0 }, { "i": 2, "x": 20.0, "y": 0.0, "sw": 0, "cs": 2, "grp": 0 }, { "i": 3, "x": 30.0, "y": 0.0, "sw": 0, "cs": 3, "grp": 0 }, { "i": 4, "x": 74.0, "y": 0.0, "sw": 0, "cs": 4, "grp": 1 }, { "i": 5, "x": 84.0, "y": 0.0, "sw": 0, "cs": 5, "grp": 1 }, { "i": 6, "x": 108.0, "y": 0.0, "sw": 0, "cs": 6, "grp": 2 }, { "i": 7, "x": 118.0, "y": 0.0, "sw": 0, "cs": 7, "grp": 2 }, { "i": 8, "x": 0.0, "y": 10.0, "sw": 1, "cs": 0, "grp": 0 }, { "i": 9, "x": 10.0, "y": 10.0, "sw": 1, "cs": 1, "grp": 0 }, { "i": 10, "x": 54.0, "y": 0.0, "sw": 1, "cs": 2, "grp": 1 }, { "i": 11, "x": 64.0, "y": 0.0, "sw": 1, "cs": 3, "grp": 1 }, { "i": 12, "x": 74.0, "y": 10.0, "sw": 1, "cs": 4, "grp": 1 }, { "i": 13, "x": 84.0, "y": 10.0, "sw": 1, "cs": 5, "grp": 1 }, { "i": 14, "x": 128.0, "y": 0.0, "sw": 1, "cs": 6, "grp": 2 }, { "i": 15, "x": 138.0, "y": 0.0, "sw": 1, "cs": 7, "grp": 2 }, { "i": 16, "x": 20.0, "y": 10.0, "sw": 2, "cs": 0, "grp": 0 }, { "i": 17, "x": 30.0, "y": 10.0, "sw": 2, "cs": 1, "grp": 0 }, { "i": 18, "x": 54.0, "y": 10.0, "sw": 2, "cs": 2, "grp": 1 }, { "i": 19, "x": 64.0, "y": 10.0, "sw": 2, "cs": 3, "grp": 1 }, { "i": 20, "x": 108.0, "y": 10.0, "sw": 2, "cs": 4, "grp": 2 }, { "i": 21, "x": 118.0, "y": 10.0, "sw": 2, "cs": 5, "grp": 2 }, { "i": 22, "x": 128.0, "y": 10.0, "sw": 2, "cs": 6, "grp": 2 }, { "i": 23, "x": 138.0, "y": 10.0, "sw": 2, "cs": 7, "grp": 2 }, { "i": 24, "x": 0.0, "y": 20.0, "sw": 3, "cs": 0, "grp": 0 }, { "i": 25, "x": 10.0, "y": 20.0, "sw": 3, "cs": 1, "grp": 0 }, { "i": 26, "x": 20.0, "y": 20.0, "sw": 3, "cs": 2, "grp": 0 }, { "i": 27, "x": 30.0, "y": 20.0, "sw": 3, "cs": 3, "grp": 0 }, { "i": 28, "x": 74.0, "y": 20.0, "sw": 3, "cs": 4, "grp": 1 }, { "i": 29, "x": 84.0, "y": 20.0, "sw": 3, "cs": 5, "grp": 1 }, { "i": 30, "x": 108.0, "y": 20.0, "sw": 3, "cs": 6, "grp": 2 }, { "i": 31, "x": 118.0, "y": 20.0, "sw": 3, "cs": 7, "grp": 2 }, { "i": 32, "x": 0.0, "y": 30.0, "sw": 4, "cs": 0, "grp": 0 }, { "i": 33, "x": 10.0, "y": 30.0, "sw": 4, "cs": 1, "grp": 0 }, { "i": 34, "x": 54.0, "y": 20.0, "sw": 4, "cs": 2, "grp": 1 }, { "i": 35, "x": 64.0, "y": 20.0, "sw": 4, "cs": 3, "grp": 1 }, { "i": 36, "x": 74.0, "y": 30.0, "sw": 4, "cs": 4, "grp": 1 }, { "i": 37, "x": 84.0, "y": 30.0, "sw": 4, "cs": 5, "grp": 1 }, { "i": 38, "x": 128.0, "y": 20.0, "sw": 4, "cs": 6, "grp": 2 }, { "i": 39, "x": 138.0, "y": 20.0, "sw": 4, "cs": 7, "grp": 2 }, { "i": 40, "x": 20.0, "y": 30.0, "sw": 5, "cs": 0, "grp": 0 }, { "i": 41, "x": 30.0, "y": 30.0, "sw": 5, "cs": 1, "grp": 0 }, { "i": 42, "x": 54.0, "y": 30.0, "sw": 5, "cs": 2, "grp": 1 }, { "i": 43, "x": 64.0, "y": 30.0, "sw": 5, "cs": 3, "grp": 1 }, { "i": 44, "x": 108.0, "y": 30.0, "sw": 5, "cs": 4, "grp": 2 }, { "i": 45, "x": 118.0, "y": 30.0, "sw": 5, "cs": 5, "grp": 2 }, { "i": 46, "x": 128.0, "y": 30.0, "sw": 5, "cs": 6, "grp": 2 }, { "i": 47, "x": 138.0, "y": 30.0, "sw": 5, "cs": 7, "grp": 2 }, { "i": 48, "x": 0.0, "y": 40.0, "sw": 6, "cs": 0, "grp": 0 }, { "i": 49, "x": 10.0, "y": 40.0, "sw": 6, "cs": 1, "grp": 0 }, { "i": 50, "x": 20.0, "y": 40.0, "sw": 6, "cs": 2, "grp": 0 }, { "i": 51, "x": 74.0, "y": 40.0, "sw": 6, "cs": 4, "grp": 1 }, { "i": 52, "x": 84.0, "y": 40.0, "sw": 6, "cs": 5, "grp": 1 }, { "i": 53, "x": 108.0, "y": 40.0, "sw": 6, "cs": 6, "grp": 2 }, { "i": 54, "x": 30.0, "y": 40.0, "sw": 7, "cs": 0, "grp": 0 }, { "i": 55, "x": 54.0, "y": 40.0, "sw": 7, "cs": 1, "grp": 1 }, { "i": 56, "x": 64.0, "y": 40.0, "sw": 7, "cs": 2, "grp": 1 }, { "i": 57, "x": 118.0, "y": 40.0, "sw": 7, "cs": 4, "grp": 2 }, { "i": 58, "x": 128.0, "y": 40.0, "sw": 7, "cs": 5, "grp": 2 }, { "i": 59, "x": 138.0, "y": 40.0, "sw": 7, "cs": 6, "grp": 2 }];
+
+    const CMP3_XMIN = 0, CMP3_XMAX = 138;
+    const CMP3_YMIN = 0, CMP3_YMAX = 40;
+    const CMP3_W = CMP3_XMAX - CMP3_XMIN;
+    const CMP3_H = CMP3_YMAX - CMP3_YMIN;
+    CMP3_LEDS.forEach(led => {
+      led.xn = (led.x - CMP3_XMIN) / CMP3_W;
+      led.yn = (led.y - CMP3_YMIN) / CMP3_H;
+      led.sNorm = led.i / (CMP3_LEDS.length - 1);   // unused (no Logo modes), kept for consistency
+    });
+
+    const cmp3Fb = CMP3_LEDS.map(() => ({ r: 0, g: 0, b: 0 }));
+
+    // Checkerboard pattern for the INTERMITTENT effect (v1.21) — computed here,
+    // not up near cmp3SetIntermittent()/cmp3ApplyIntermittent(), because those
+    // are just function declarations (hoisted, safe to reference CMP3_LEDS
+    // from anywhere), but this is a plain const evaluated immediately at
+    // script load time and MUST come after CMP3_LEDS is actually defined
+    // above, or it throws a temporal-dead-zone ReferenceError on page load.
+    const CMP3_INTERMITTENT_ON = CMP3_LEDS
+      .filter(led => (Math.round(led.x / 10) + Math.round(led.y / 10)) % 2 === 0)
+      .map(led => led.i);
+    const CMP3_INTERMITTENT_SET = new Set(CMP3_INTERMITTENT_ON);
+
+    function renderCmp3Preview() {
+      const svg = $('cmp3Preview');
+      if (!svg) return;   // Live Preview card removed (v1.15) — still compute cmp3Fb, just skip drawing
+      const SVG_W = 700, SVG_H = 220, MARGIN = 24;
+      const SCALE = Math.min((SVG_W - 2 * MARGIN) / CMP3_W, (SVG_H - 2 * MARGIN) / CMP3_H);
+      const offX = (SVG_W - CMP3_W * SCALE) / 2;
+      const offY = (SVG_H - CMP3_H * SCALE) / 2;
+      const sx = x => offX + (x - CMP3_XMIN) * SCALE;
+      const sy = y => SVG_H - offY - (y - CMP3_YMIN) * SCALE;
+      const R = 8;
+
+      let html = `<defs>
+    <filter id="cmp3Glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`;
+
+      for (const led of CMP3_LEDS) {
+        const { r, g, b } = cmp3Fb[led.i];
+        const isOff = r + g + b < 12;
+        const color = isOff ? '#1a1a24' : `rgb(${r},${g},${b})`;
+        const filter = !isOff ? 'filter="url(#cmp3Glow)"' : '';
+        const typeStroke = ['#ff5e00', '#00b4ff', '#7cff5e'][led.grp];
+        html += `<circle cx="${sx(led.x).toFixed(1)}" cy="${sy(led.y).toFixed(1)}" r="${R}" fill="${color}" stroke="${isOff ? typeStroke : '#fff'}" stroke-width="${isOff ? 1 : 0.5}" stroke-opacity="${isOff ? 0.45 : 0.35}" ${filter} data-i="${led.i}" style="cursor:pointer;"/>`;
+      }
+      svg.innerHTML = html;
+      svg.querySelectorAll('circle').forEach(c => {
+        c.addEventListener('click', () => {
+          const i = parseInt(c.dataset.i);
+          const { r, g, b } = currentColor;
+          cmp3Fb[i] = { r, g, b };
+          sendCmp3Pixel(i, r, g, b);
+          renderCmp3Preview();
+        });
+      });
+    }
+
+    function renderOsramPreview() {
+      const svg = $('osramPreview');
+      if (!svg) return;   // Live Preview card removed (v1.15) — still compute osramFb, just skip drawing
+      const SVG_W = 800, SVG_H = 180, MARGIN = 22;
+      const SCALE = (SVG_W - 2 * MARGIN) / OSRAM_W;
+      const sx = x => MARGIN + (x - OSRAM_XMIN) * SCALE;
+      const sy = y => SVG_H - MARGIN - (y - OSRAM_YMIN) * SCALE;
+      const R = 9;
+
+      let html = `<defs>
+    <filter id="osramGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`;
+
+      for (const led of OSRAM_LEDS) {
+        const { r, g, b } = osramFb[led.i];
+        const isOff = r + g + b < 12;
+        const color = isOff ? '#1a1a24' : `rgb(${r},${g},${b})`;
+        const filter = !isOff ? 'filter="url(#osramGlow)"' : '';
+        html += `<circle cx="${sx(led.x).toFixed(1)}" cy="${sy(led.y).toFixed(1)}" r="${R}" fill="${color}" stroke="#fff" stroke-width="0.5" stroke-opacity="${isOff ? 0.1 : 0.35}" ${filter} data-i="${led.i}" style="cursor:pointer;"/>`;
+      }
+      svg.innerHTML = html;
+      svg.querySelectorAll('circle').forEach(c => {
+        c.addEventListener('click', () => {
+          const i = parseInt(c.dataset.i);
+          const { r, g, b } = currentColor;
+          osramFb[i] = { r, g, b };
+          sendOSRAMPixel(i, r, g, b);
+          renderOsramPreview();
+        });
+      });
+    }
+
+    // ============================================================================
+    // OSRAM live preview animation engine
+    // ----------------------------------------------------------------------------
+    // Mirrors the firmware's coordinate-based effect renderer so the user can
+    // preview each effect locally — works even when BLE is disconnected. The
+    // math is the same; the only differences are:
+    //   - Frame rate is capped at ~30 fps for battery friendliness in the browser
+    //   - Gamma 2.2 is applied at display time (firmware does it via LUT in flush)
+    // ============================================================================
+
+    // Normalized LED coordinates (added once at startup for fast inner-loop access)
+    OSRAM_LEDS.forEach(led => {
+      led.xn = (led.x - OSRAM_XMIN) / OSRAM_W;
+      led.yn = (led.y - OSRAM_YMIN) / OSRAM_H;
+    });
+
+    // Letter group metadata for Logo 1 (Meteor)
+    const LETTER_GROUPS = { O: [], S: [], R: [], A: [], M: [] };
+    OSRAM_LEDS.forEach(l => LETTER_GROUPS[l.L].push(l));
+    // Derive per-letter normalized stroke order (0..1 within each letter)
+    // Note: source data has no .s field anymore — we approximate stroke order
+    // from xn/yn using a simple "start top-left, walk around" heuristic.
+    // In practice this gives a pleasant meteor-trace path.
+    for (const L in LETTER_GROUPS) {
+      const arr = LETTER_GROUPS[L];
+      // Sort by an angular sweep around the letter centroid + radius
+      const cx = arr.reduce((s, p) => s + p.x, 0) / arr.length;
+      const cy = arr.reduce((s, p) => s + p.y, 0) / arr.length;
+      arr.forEach(p => {
+        p._ang = Math.atan2(p.y - cy, p.x - cx);
+        p._r = Math.sqrt((p.x - cx) ** 2 + (p.y - cy) ** 2);
+      });
+      arr.sort((a, b) => a._ang - b._ang);
+      arr.forEach((p, i) => { p.sNorm = arr.length > 1 ? i / (arr.length - 1) : 0; });
+    }
+
+    const COLOR_ORANGE_F = [240 / 255, 70 / 255, 28 / 255];
+    const COLOR_WHITE_HOT = [1.0, 0.98, 0.92];
+    const COLOR_WHITE_COOL = [0.85, 0.92, 1.0];
+
+    // Perlin noise (deterministic permutation, seed 0xC0FFEE12 — matches FW)
+    const perlinPerm = new Uint8Array(512);
+    (function () {
+      const p = new Uint8Array(256);
+      for (let i = 0; i < 256; i++) p[i] = i;
+      let s = 0xC0FFEE12;
+      for (let i = 255; i > 0; i--) {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        const j = s % (i + 1);
+        [p[i], p[j]] = [p[j], p[i]];
+      }
+      for (let i = 0; i < 512; i++) perlinPerm[i] = p[i & 255];
+    })();
+    function _fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+    function _lerp(t, a, b) { return a + t * (b - a); }
+    function _grad(h, x, y, z) {
+      const g = h & 15;
+      const u = g < 8 ? x : y;
+      const v = g < 4 ? y : (g === 12 || g === 14) ? x : z;
+      return ((g & 1) === 0 ? u : -u) + ((g & 2) === 0 ? v : -v);
+    }
+    function perlin(x, y, z) {
+      z = z || 0;
+      const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+      x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+      const u = _fade(x), v = _fade(y), w = _fade(z);
+      const A = perlinPerm[X] + Y, AA = perlinPerm[A] + Z, AB = perlinPerm[A + 1] + Z;
+      const B = perlinPerm[X + 1] + Y, BA = perlinPerm[B] + Z, BB = perlinPerm[B + 1] + Z;
+      return _lerp(w,
+        _lerp(v, _lerp(u, _grad(perlinPerm[AA], x, y, z), _grad(perlinPerm[BA], x - 1, y, z)),
+          _lerp(u, _grad(perlinPerm[AB], x, y - 1, z), _grad(perlinPerm[BB], x - 1, y - 1, z))),
+        _lerp(v, _lerp(u, _grad(perlinPerm[AA + 1], x, y, z - 1), _grad(perlinPerm[BA + 1], x - 1, y, z - 1)),
+          _lerp(u, _grad(perlinPerm[AB + 1], x, y - 1, z - 1), _grad(perlinPerm[BB + 1], x - 1, y - 1, z - 1))));
+    }
+
+    function _smoothstep(e0, e1, x) {
+      const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+      return t * t * (3 - 2 * t);
+    }
+    function _lerpColor(a, b, t) {
+      return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+    }
+    function _hsv2rgbF(h, s, v) {
+      const c = v * s, hh = (h / 60) % 6;
+      const x = c * (1 - Math.abs(hh % 2 - 1));
+      let r = 0, g = 0, b = 0;
+      if (hh < 1) { r = c; g = x; }
+      else if (hh < 2) { r = x; g = c; }
+      else if (hh < 3) { g = c; b = x; }
+      else if (hh < 4) { g = x; b = c; }
+      else if (hh < 5) { r = x; b = c; }
+      else { r = c; b = x; }
+      const m = v - c;
+      return [r + m, g + m, b + m];
+    }
+
+    // Compute color for a single LED for a given mode and time (in seconds).
+    // Returns linear [r, g, b] in 0..1.
+    function osramComputeColor(led, mode, t) {
+      const xn = led.xn, yn = led.yn;
+      const x8 = xn * 8, y8 = yn * 8;
+
+      if (mode === 1) {
+        // Logo 1: Meteor → Orange Logo (8.3s cycle)
+        const PERIOD = 8.33;
+        const tn = (t % PERIOD) / PERIOD;
+        const sLocal = led.sNorm;
+        const STREAK_END = 0.55;
+        const HOLD_BEGIN = 0.62;
+        const FADE_BEGIN = 0.92;
+
+        let streakHead = 0, streakTail = 0, isHead = false;
+        if (tn <= STREAK_END) {
+          const headPos = tn / STREAK_END;
+          const HEAD_WIDTH = 0.10, TAIL = 0.42;
+          const dist = headPos - sLocal;
+          if (dist >= -0.05 && dist < TAIL) {
+            streakHead = Math.exp(-(dist / HEAD_WIDTH) * (dist / HEAD_WIDTH));
+            streakTail = Math.max(0, 1 - dist / TAIL) * 0.5;
+            if (dist < 0) {
+              streakHead *= Math.max(0, 1 + dist / 0.05);
+              streakTail *= Math.max(0, 1 + dist / 0.05);
+            }
+            isHead = streakHead > streakTail * 0.8 && streakHead > 0.15;
+          }
+        }
+        const streakI = Math.max(streakHead, streakTail);
+
+        let revealLevel = 0;
+        const localFillStart = STREAK_END * Math.max(0, sLocal - 0.05);
+        if (tn > localFillStart && tn < HOLD_BEGIN) {
+          revealLevel = _smoothstep(localFillStart, HOLD_BEGIN, tn) * 0.5;
+        } else if (tn >= HOLD_BEGIN && tn < FADE_BEGIN) {
+          revealLevel = 0.5 + _smoothstep(HOLD_BEGIN, 0.85, tn) * 0.5;
+        } else if (tn >= FADE_BEGIN) {
+          revealLevel = 1.0 * (1 - _smoothstep(FADE_BEGIN, 1.0, tn));
+        }
+
+        let r = 0, g = 0, b = 0;
+        if (streakI > 0.001) {
+          const sc = isHead
+            ? _lerpColor(COLOR_WHITE_HOT, COLOR_WHITE_COOL, streakHead)
+            : COLOR_WHITE_HOT;
+          r += sc[0] * streakI; g += sc[1] * streakI; b += sc[2] * streakI;
+        }
+        if (revealLevel > 0.001) {
+          const t2 = _smoothstep(0, 0.85, revealLevel);
+          const rc = _lerpColor(COLOR_WHITE_HOT, COLOR_ORANGE_F, t2);
+          r += rc[0] * revealLevel; g += rc[1] * revealLevel; b += rc[2] * revealLevel;
+        }
+        return [Math.min(1, r), Math.min(1, g), Math.min(1, b)];
+      }
+
+      if (mode === 2) {
+        // Logo 2: Warm-up (12s cycle, multi-color temperature ramp)
+        const PERIOD = 12.0;
+        const tn = (t % PERIOD) / PERIOD;
+        if (tn > 0.75) return COLOR_ORANGE_F.slice();
+        const rampT = tn / 0.75;
+        const localOffset = led.xn * 0.08 + Math.sin(led.i * 0.5) * 0.03;
+        const rampLocal = Math.max(0, Math.min(1, rampT + localOffset - 0.04));
+
+        let hue, sat, val;
+        if (rampLocal < 0.15) {
+          const k = rampLocal / 0.15;
+          hue = 270 - k * 30; sat = 0.65 + k * 0.25; val = k * 0.35;
+        } else if (rampLocal < 0.40) {
+          const k = (rampLocal - 0.15) / 0.25;
+          hue = 240 - k * 60; sat = 0.90; val = 0.35 + k * 0.30;
+        } else if (rampLocal < 0.65) {
+          const k = (rampLocal - 0.40) / 0.25;
+          hue = 180 - k * 120; sat = 0.90 - k * 0.05; val = 0.65 + k * 0.20;
+        } else if (rampLocal < 0.90) {
+          const k = (rampLocal - 0.65) / 0.25;
+          hue = 60 - k * 48; sat = 0.85 + k * 0.03; val = 0.85 + k * 0.09;
+        } else {
+          hue = 12; sat = 0.88; val = 0.94;
+        }
+        const flicker = rampLocal < 0.55
+          ? (Math.sin(t * 11 + led.i * 0.7) * 0.5 + 0.5) * 0.08 * (1 - rampLocal * 1.8)
+          : 0;
+        val = Math.max(0, Math.min(1, val + flicker));
+        return _hsv2rgbF(hue, sat, val);
+      }
+
+      if (mode === 3) {
+        // Logo 3: Reveal (9s cycle, rainbow-edge curtain, then orange)
+        const PERIOD = 9.0;
+        const tn = (t % PERIOD) / PERIOD;
+        const SWEEP_END = 0.45, HOLD_END = 0.92;
+
+        if (tn > HOLD_END) {
+          const k = (tn - HOLD_END) / (1.0 - HOLD_END);
+          const fade = 1 - _smoothstep(0, 1, k);
+          return [COLOR_ORANGE_F[0] * fade, COLOR_ORANGE_F[1] * fade, COLOR_ORANGE_F[2] * fade];
+        }
+        if (tn > SWEEP_END) {
+          const settle = _smoothstep(SWEEP_END, SWEEP_END + 0.20, tn);
+          const cycle = Math.floor(t / PERIOD);
+          const hueAtPass = (led.xn * 280 + cycle * 60) % 360;
+          const passColor = _hsv2rgbF(hueAtPass, 0.85, 0.95);
+          return _lerpColor(passColor, COLOR_ORANGE_F, settle);
+        }
+        const sweepPos = tn / SWEEP_END;
+        const localX = led.xn;
+        const EDGE = 0.10;
+        if (localX < sweepPos - EDGE) {
+          const cycle = Math.floor(t / PERIOD);
+          const h = (localX * 280 + cycle * 60) % 360;
+          return _hsv2rgbF(h, 0.85, 0.95);
+        } else if (localX < sweepPos + EDGE) {
+          const cycle = Math.floor(t / PERIOD);
+          const ed = (localX - sweepPos) / EDGE;
+          const eh = ((sweepPos * 360) + ed * 90 + cycle * 60 + 280) % 360;
+          const intensity = 1 - Math.abs(ed) * 0.3;
+          const peakBoost = Math.exp(-Math.pow(ed / 0.4, 2)) * 0.3;
+          return _hsv2rgbF(eh, 1.0, Math.min(1, intensity + peakBoost));
+        } else {
+          return [0, 0, 0];
+        }
+      }
+
+      if (mode === 4) {
+        // Aurora
+        const y_top = 8 - y8;
+        const n = perlin(x8 * 0.12 + t, y_top * 0.04, t * 0.08);
+        const s = Math.sin(x8 * 0.35 + n * 5.5) * 0.5 + 0.5;
+        const lum = Math.pow(s, 2.5);
+        const hueBase = 140 + Math.sin(t * 0.5) * 40;
+        const hue = ((hueBase + y_top * 15) % 360 + 360) % 360;
+        return _hsv2rgbF(hue, 0.9, lum);
+      }
+
+      if (mode === 5) {
+        // Ocean
+        const w = perlin(x8 * 0.35 - t, y8 * 0.25, t * 0.15);
+        const amp = Math.sin(x8 * 0.6 + t * 2.8 + w * 4.5);
+        const baseB = (amp * 0.5 + 0.5) * 180 / 255 + 75 / 255;
+        const f = Math.max(0, (amp - 0.35) / 0.65);
+        return [baseB * f, baseB * 0.4 + baseB * 0.6 * f, baseB];
+      }
+
+      if (mode === 6) {
+        // Flame
+        const y_top = 8 - y8;
+        const n = perlin(x8 * 0.45, y_top * 0.2 + t * 3.5, t * 0.4);
+        let heat = (n * 0.5 + 0.5) * (1.2 - y_top / 6.5);
+        if (heat < 0) heat = 0;
+        if (heat > 1) heat = 1;
+        return [heat, Math.pow(heat, 2.2) * 0.7, Math.pow(heat, 3.5) * 0.3];
+      }
+
+      return [0, 0, 0];
+    }
+
+    // Animation loop state
+    let osramAnimRaf = null;
+    let osramAnimStart = 0;
+    let osramAnimMode = 0;
+    const osramFbLinear = OSRAM_LEDS.map(() => [0, 0, 0]);
+    const osramFbEMA = OSRAM_LEDS.map(() => [0, 0, 0]);
+    const EMA_ALPHA = 0.65;
+
+    function startOsramPreviewAnimation(mode) {
+      // Stop any running anim
+      if (osramAnimRaf) {
+        cancelAnimationFrame(osramAnimRaf);
+        osramAnimRaf = null;
+      }
+      osramAnimMode = mode;
+
+      // mode 0 (static): leave preview as-is
+      // mode 255 (off): clear and stop
+      if (mode === 0) return;
+      if (mode === 255) {
+        for (let i = 0; i < 64; i++) {
+          osramFb[i] = { r: 0, g: 0, b: 0 };
+          osramFbEMA[i][0] = osramFbEMA[i][1] = osramFbEMA[i][2] = 0;
+        }
+        renderOsramPreview();
+        return;
+      }
+
+      osramAnimStart = performance.now();
+      // Reset EMA so transitions start clean
+      for (let i = 0; i < 64; i++) {
+        osramFbEMA[i][0] = osramFbEMA[i][1] = osramFbEMA[i][2] = 0;
+      }
+      osramAnimLoop();
+    }
+
+    function osramAnimLoop() {
+      const t = (performance.now() - osramAnimStart) / 1000;
+      // Compute linear RGB for each LED
+      for (const led of OSRAM_LEDS) {
+        const [r, g, b] = osramComputeColor(led, osramAnimMode, t);
+        // EMA smoothing
+        osramFbEMA[led.i][0] = EMA_ALPHA * r + (1 - EMA_ALPHA) * osramFbEMA[led.i][0];
+        osramFbEMA[led.i][1] = EMA_ALPHA * g + (1 - EMA_ALPHA) * osramFbEMA[led.i][1];
+        osramFbEMA[led.i][2] = EMA_ALPHA * b + (1 - EMA_ALPHA) * osramFbEMA[led.i][2];
+        // Apply display gamma 2.2 and convert to 8-bit for SVG fill
+        const rs = Math.max(0, Math.min(1, osramFbEMA[led.i][0]));
+        const gs = Math.max(0, Math.min(1, osramFbEMA[led.i][1]));
+        const bs = Math.max(0, Math.min(1, osramFbEMA[led.i][2]));
+        osramFb[led.i] = {
+          r: Math.round(Math.pow(rs, 1 / 2.2) * 255),
+          g: Math.round(Math.pow(gs, 1 / 2.2) * 255),
+          b: Math.round(Math.pow(bs, 1 / 2.2) * 255),
+        };
+      }
+      renderOsramPreview();
+      // ~30 fps cap to be battery-friendly
+      osramAnimRaf = setTimeout(() => requestAnimationFrame(osramAnimLoop), 33);
+    }
+
+    // ============================================================================
+    // OS-Logo (new_block) preview animation — runs osLogoComputeColor(), the
+    // dedicated 42-LED/8-effect engine (v1.28), NOT osramComputeColor(). Modes
+    // here are 1-8 (CONVERGE FLASH..FIREWORKS), set via setOsLogoEffectMode().
+    // ============================================================================
+    let lAnimRaf = null;
+    let lAnimStart = 0;
+    let lAnimMode = 0;
+    const lFbLinear = L_LEDS.map(() => [0, 0, 0]);
+    const lFbEMA = L_LEDS.map(() => [0, 0, 0]);
+
+    function startLPreviewAnimation(mode) {
+      if (lAnimRaf) {
+        cancelAnimationFrame(lAnimRaf);
+        lAnimRaf = null;
+      }
+      lAnimMode = mode;
+
+      if (mode === 0) return;
+      if (mode === 255) {
+        for (let i = 0; i < L_LEDS.length; i++) {
+          lFb[i] = { r: 0, g: 0, b: 0 };
+          lFbEMA[i][0] = lFbEMA[i][1] = lFbEMA[i][2] = 0;
+        }
+        renderLPreview();
+        return;
+      }
+
+      lAnimStart = performance.now();
+      for (let i = 0; i < L_LEDS.length; i++) {
+        lFbEMA[i][0] = lFbEMA[i][1] = lFbEMA[i][2] = 0;
+      }
+      lAnimLoop();
+    }
+
+    function lAnimLoop() {
+      const t = (performance.now() - lAnimStart) / 1000;
+      for (const led of L_LEDS) {
+        const [r, g, b] = osLogoComputeColor(lAnimMode, led, t);
+        lFbEMA[led.i][0] = EMA_ALPHA * r + (1 - EMA_ALPHA) * lFbEMA[led.i][0];
+        lFbEMA[led.i][1] = EMA_ALPHA * g + (1 - EMA_ALPHA) * lFbEMA[led.i][1];
+        lFbEMA[led.i][2] = EMA_ALPHA * b + (1 - EMA_ALPHA) * lFbEMA[led.i][2];
+        const rs = Math.max(0, Math.min(1, lFbEMA[led.i][0]));
+        const gs = Math.max(0, Math.min(1, lFbEMA[led.i][1]));
+        const bs = Math.max(0, Math.min(1, lFbEMA[led.i][2]));
+        lFb[led.i] = {
+          r: Math.round(Math.pow(rs, 1 / 2.2) * 255),
+          g: Math.round(Math.pow(gs, 1 / 2.2) * 255),
+          b: Math.round(Math.pow(bs, 1 / 2.2) * 255),
+        };
+      }
+      renderLPreview();
+      lAnimRaf = setTimeout(() => requestAnimationFrame(lAnimLoop), 33);
+    }
+
+    // ============================================================================
+    // 3-LED Comparison Board preview animation — same engine, modes 4/5/6 only
+    // (Aurora/Ocean/Flame). Logo1/2/3 are never sent to this module (UI has no
+    // buttons for them, and firmware rejects them defensively too).
+    // ============================================================================
+    let cmp3AnimRaf = null;
+    let cmp3AnimStart = 0;
+    let cmp3AnimMode = 0;
+    const cmp3FbLinear = CMP3_LEDS.map(() => [0, 0, 0]);
+    const cmp3FbEMA = CMP3_LEDS.map(() => [0, 0, 0]);
+
+    function startCmp3PreviewAnimation(mode) {
+      if (cmp3AnimRaf) {
+        cancelAnimationFrame(cmp3AnimRaf);
+        cmp3AnimRaf = null;
+      }
+      cmp3AnimMode = mode;
+
+      if (mode === 0) return;
+      if (mode === 255) {
+        for (let i = 0; i < CMP3_LEDS.length; i++) {
+          cmp3Fb[i] = { r: 0, g: 0, b: 0 };
+          cmp3FbEMA[i][0] = cmp3FbEMA[i][1] = cmp3FbEMA[i][2] = 0;
+        }
+        renderCmp3Preview();
+        return;
+      }
+
+      cmp3AnimStart = performance.now();
+      for (let i = 0; i < CMP3_LEDS.length; i++) {
+        cmp3FbEMA[i][0] = cmp3FbEMA[i][1] = cmp3FbEMA[i][2] = 0;
+      }
+      cmp3AnimLoop();
+    }
+
+    function cmp3AnimLoop() {
+      const t = (performance.now() - cmp3AnimStart) / 1000;
+      for (const led of CMP3_LEDS) {
+        const [r, g, b] = osramComputeColor(led, cmp3AnimMode, t);
+        cmp3FbEMA[led.i][0] = EMA_ALPHA * r + (1 - EMA_ALPHA) * cmp3FbEMA[led.i][0];
+        cmp3FbEMA[led.i][1] = EMA_ALPHA * g + (1 - EMA_ALPHA) * cmp3FbEMA[led.i][1];
+        cmp3FbEMA[led.i][2] = EMA_ALPHA * b + (1 - EMA_ALPHA) * cmp3FbEMA[led.i][2];
+        const rs = Math.max(0, Math.min(1, cmp3FbEMA[led.i][0]));
+        const gs = Math.max(0, Math.min(1, cmp3FbEMA[led.i][1]));
+        const bs = Math.max(0, Math.min(1, cmp3FbEMA[led.i][2]));
+        cmp3Fb[led.i] = {
+          r: Math.round(Math.pow(rs, 1 / 2.2) * 255),
+          g: Math.round(Math.pow(gs, 1 / 2.2) * 255),
+          b: Math.round(Math.pow(bs, 1 / 2.2) * 255),
+        };
+      }
+      renderCmp3Preview();
+      cmp3AnimRaf = setTimeout(() => requestAnimationFrame(cmp3AnimLoop), 33);
+    }
+
+    // ============================================================================
     // Init
     // ============================================================================
     window.addEventListener('load', () => {
       setStatus('', 'Disconnected — tap to connect');
       // Pre-init log only if VIOLA view is being shown
-      log('LED Module Controller v1.4 ready', 'ok');
+      log('LED Module Controller v1.0 ready', 'ok');
       log(`Service UUID: ${UART_SVC}`);
       if (!navigator.bluetooth) {
         log('Warning: Web Bluetooth unavailable in this browser', 'err');
@@ -1214,6 +3433,8 @@
     window.addEventListener('resize', () => {
       if (violaWheelInitialized) rasterizeBaseWheel(violaWheel, violaWheelCache, 'viola');
       if (osramWheelInitialized) rasterizeBaseWheel(osramWheel, osramWheelCache, 'osram');
+      if (lWheelInitialized) rasterizeBaseWheel(lWheel, lWheelCache, 'l');
+      if (cmp3WheelInitialized) rasterizeBaseWheel(cmp3Wheel, cmp3WheelCache, 'cmp3');
     });
   </script>
 
